@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+	<OutDir>.\bin</OutDir>
+	<OutDirSafeToRemove Condition="!Exists('$(OutDir)') or Exists('$(OutDir)\outdir.safetoremove')">Yes</OutDirSafeToRemove>
+	<BuildDir>.\obj</BuildDir>
+	<BuildDirSafeToRemove Condition="!Exists('$(BuildDir)') or Exists('$(BuildDir)\builddir.safetoremove')">Yes</BuildDirSafeToRemove>
+	<DEBUGGING>No</DEBUGGING>
+  </PropertyGroup>
+	<Choose>
+		<When Condition="'$(DEBUGGING)'=='Yes'">
+			<PropertyGroup>
+				<DefineConstants>DEBUG;TRACE</DefineConstants>
+				<EmitDebugInformation>true</EmitDebugInformation>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<DefineConstants></DefineConstants>
+				<EmitDebugInformation>false</EmitDebugInformation>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
+  <Target Name="MakeBuildDir" Condition="!Exists('$(BuildDir)')">
+	<MakeDir Directories="$(BuildDir)" />
+	<Touch Files="$(BuildDir)\builddir.safetoremove" AlwaysCreate="True" />
+  </Target>
+  <Target Name="MakeOutDir" Condition="!Exists('$(OutDir)')">
+	<MakeDir Directories="$(OutDir)" />
+	<Touch Files="$(OutDir)\outdir.safetoremove" AlwaysCreate="True" />
+  </Target>
+  <Target Name="MakeDirs" DependsOnTargets="MakeBuildDir;MakeOutDir" />
+  <Target Name="MkRes" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\mkres.exe" Sources="mkres.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Enc" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\enc.exe" Sources="enc.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Ico2Png" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\ico2png.exe" Sources="ico2png.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="JTime" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\jtime.exe" Sources="jtime.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="MkIcon" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\mkicon.exe" Sources="mkicon.cs" TargetType="exe" AllowUnsafeBlocks="true" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="ResPeel" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\respeel.exe" Sources="respeel.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" DisabledWarnings="649"/>
+  </Target>
+  <Target Name="SuDo" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\sudo.exe" Sources="sudo.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="CalendarResources" DependsOnTargets="MakeDirs;MkRes">
+	<Exec Command="$(OutDir)\mkres.exe $(BuildDir)\CalendarForm.resources /icon &quot;$this.Icon&quot; calendar.ico" Outputs="$(BuildDir)\CalendarForm.resources" />
+  </Target>
+  <Target Name="Calendar" DependsOnTargets="MakeDirs;CalendarResources">
+	<Csc OutputAssembly="$(OutDir)\calendar.exe" Sources="calendar.cs" TargetType="winexe" Win32Icon="calendar.ico" Resources="$(BuildDir)\CalendarForm.resources" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="ColorMatcherResources" DependsOnTargets="MakeDirs;MkRes">
+	<Exec Command="$(OutDir)\mkres.exe $(BuildDir)\colormatcher.ColorMatcherForm.resources /icon &quot;$this.Icon&quot; colormatcher.ico" Outputs="$(BuildDir)\colormatcher.ColorMatcherForm.resources" />
+  </Target>
+  <Target Name="ColorMatcher" DependsOnTargets="MakeDirs;ColorMatcherResources">
+	<Csc OutputAssembly="$(OutDir)\colormatcher.exe" Sources="colormatcher.cs" Win32Icon="colormatcher.ico" TargetType="winexe" Resources="$(BuildDir)\colormatcher.ColorMatcherForm.resources" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="ColorPickerResources" DependsOnTargets="MakeDirs;MkRes">
+	<Exec Command="$(OutDir)\mkres.exe $(BuildDir)\colorpicker.ColorPickerMainForm.resources /icon &quot;$this.Icon&quot; colorpicker.ico" Outputs="$(BuildDir)\colorpicker.ColorPickerMainForm.resources" />
+  </Target>
+  <Target Name="ColorPicker" DependsOnTargets="MakeDirs;ColorPickerResources">
+	<Csc OutputAssembly="$(OutDir)\colorpicker.exe" Sources="colorpicker.cs" Win32Icon="colorpicker.ico" TargetType="winexe" Resources="$(BuildDir)\colorpicker.ColorPickerMainForm.resources" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Wrap" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\wrap.exe" Sources="wrap.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="JavaClassFileVers" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\JavaClassFileVers.exe" Sources="javaclassfilevers.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="JsUTF" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\jsutf.exe" Sources="jsutf.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Pwgen" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\pwgen.exe" Sources="pwgen.cs" References="System.Numerics.dll" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Paste" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\paste.exe" Sources="paste.cs" References="WPF\PresentationCore.dll" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Pbkdf2" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\pbkdf2.exe" Sources="pbkdf2.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Colour" DependsOnTargets="MakeDirs">
+	<Csc OutputAssembly="$(OutDir)\colour.exe" Sources="colour.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="Build" DependsOnTargets="MkRes;Calendar;Enc;MkIcon;Ico2Png;ResPeel;JTime;SuDo;ColorMatcher;ColorPicker;Wrap;JavaClassFileVers;JsUTF;Pwgen;Paste;Pbkdf2;Colour" />
+  <Target Name="Clean">
+	<RemoveDir Condition="'$(BuildDirSafeToRemove)'=='Yes'" Directories="$(BuildDir)" />
+	<RemoveDir Condition="'$(OutDirSafeToRemove)'=='Yes'" Directories="$(OutDir)" />
+  </Target>
+</Project>
