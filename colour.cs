@@ -206,19 +206,23 @@ class color
             }
             else if(M == r)
             {
-                h = 60 * Math.IEEERemainder((g - b) / C, 6);
+                h = (g - b) / C;
             }
             else if(M == g)
             {
-                h = 60 * (2 + (b - r) / C);
+                h = (b - r) / C + 2;
             }
             else
             {
-                h = 60 * (4 + (r - g) / C);
+                h = (r - g) / C + 4;
             }
-            h /= 360;
+            h %= 6;
+            while(h < 0) {
+                h += 6;
+            }
+            h /= 6;
             l = 0.5 * (M + m);
-            if (C == 0)
+            if (l == 0 || l == 1)
             {
                 s = 0;
             }
