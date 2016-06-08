@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
@@ -238,6 +239,186 @@ public class pwgen
 		return buf.ToString();
 	}
 
+	public class ComplexityConstraints
+	{
+		Dictionary<UnicodeCategory, int> constraints;
+
+		public ComplexityConstraints()
+		{
+			constraints = new Dictionary<UnicodeCategory, int>();
+		}
+
+		public ComplexityConstraints Add(UnicodeCategory category, int limit)
+		{
+			UnicodeCategory cat = Simplify(category);
+			if(constraints.ContainsKey(cat) && constraints[cat] != limit)
+			{
+				throw new ArgumentException(string.Format("Duplicate constraint: {0}", category));
+			}
+			constraints[cat] = limit;
+			return this;
+		}
+
+		public bool IsAcceptable(string a)
+		{
+			Dictionary<UnicodeCategory, int> counts = new Dictionary<UnicodeCategory, int>();
+			for(int i = 0; i < a.Length; ++i)
+			{
+				UnicodeCategory cat = Categorize(a[i]);
+				if(counts.ContainsKey(cat))
+				{
+					counts[cat] = 1 + counts[cat];
+				}
+				else
+				{
+					counts[cat] = 1;
+				}
+			}
+			foreach(var c in constraints)
+			{
+				if((c.Value > 0) &&  (!counts.ContainsKey(c.Key) || counts[c.Key] < c.Value))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public string MakeAcceptable(string a)
+		{
+			StringBuilder buf = new StringBuilder(a);
+			Dictionary<UnicodeCategory, int> counts = new Dictionary<UnicodeCategory, int>();
+			for(int i = 0; i < buf.Length; ++i)
+			{
+				UnicodeCategory cat = Categorize(buf[i]);
+				if(counts.ContainsKey(cat))
+				{
+					counts[cat] = 1 + counts[cat];
+				}
+				else
+				{
+					counts[cat] = 1;
+				}
+			}
+			int hash = 0x6E25B2B1; // an arbitrary number that just happens to be prime
+			for(int i = 0; i < buf.Length; ++i)
+			{
+				hash = ((hash << 19) | ((hash >> 13) & 0x7FFFF)) ^ (int)buf[i];
+			}
+			foreach(var c in constraints)
+			{
+				string substitutes = Substitutes(c.Key);
+				if(string.IsNullOrEmpty(substitutes) || c.Value < 1 || (counts.ContainsKey(c.Key) && counts[c.Key] >= c.Value))
+				{
+					continue;
+				}
+				UnicodeCategory cat = c.Key;
+				int surplus = -1;
+				foreach(var k in counts)
+				{
+					if(k.Key != c.Key)
+					{
+						int s = k.Value - (constraints.ContainsKey(k.Key) ? constraints[k.Key] : 0);
+						if(s > surplus)
+						{
+							cat = k.Key;
+							surplus = s;
+						}
+					}
+				}
+				if(surplus < 1)
+				{
+					break;
+				}
+				int nth = (hash & 0x7FFFFFFF) % counts[cat];
+				for(int i = 0; i < buf.Length; ++i)
+				{
+					if(Categorize(buf[i]) == cat)
+					{
+						if(nth == 0)
+						{
+							if(i > 0)
+							{
+								buf[i] = substitutes[(hash & 0x7FFFFFFF) % substitutes.Length];
+								break;
+							}
+						}
+						else
+						{
+							--nth;
+						}
+					}
+				}
+				counts[cat] = counts[cat] - 1;
+				if(counts.ContainsKey(c.Key))
+				{
+					counts[c.Key] = counts[c.Key] + 1;
+				}
+				else
+				{
+					counts[c.Key] = 1;
+				}
+				hash = ((hash << 19) | ((hash >> 13) & 0x7FFFF));
+			}
+			return buf.ToString();
+		}
+
+		public static string Substitutes(UnicodeCategory cat)
+		{
+			switch(cat)
+			{
+				default:
+					return null;
+				case UnicodeCategory.UppercaseLetter:
+					return "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+				case UnicodeCategory.LowercaseLetter:
+					return "abcdefghijklmnopqrstuvwxyz";
+				case UnicodeCategory.OtherPunctuation:
+					return "!@#%&*()-_[]{}\\;:\'";
+				case UnicodeCategory.OtherSymbol:
+					return "~`$^=+|";
+				case UnicodeCategory.OtherNumber:
+					return "0123456789";
+			}
+		}
+
+		public static UnicodeCategory Simplify(UnicodeCategory cat)
+		{
+			switch(cat)
+			{
+				default:
+					return UnicodeCategory.OtherNotAssigned;
+				case UnicodeCategory.UppercaseLetter:
+				case UnicodeCategory.TitlecaseLetter:
+					return UnicodeCategory.UppercaseLetter;
+				case UnicodeCategory.LowercaseLetter:
+				case UnicodeCategory.OtherLetter:
+					return UnicodeCategory.LowercaseLetter;
+				case UnicodeCategory.ClosePunctuation:
+				case UnicodeCategory.ConnectorPunctuation:
+				case UnicodeCategory.DashPunctuation:
+				case UnicodeCategory.FinalQuotePunctuation:
+				case UnicodeCategory.InitialQuotePunctuation:
+				case UnicodeCategory.OpenPunctuation:
+				case UnicodeCategory.OtherPunctuation:
+					return UnicodeCategory.OtherPunctuation;
+				case UnicodeCategory.CurrencySymbol:
+				case UnicodeCategory.MathSymbol:
+				case UnicodeCategory.OtherSymbol:
+					return UnicodeCategory.OtherSymbol;
+				case UnicodeCategory.DecimalDigitNumber:
+				case UnicodeCategory.LetterNumber:
+				case UnicodeCategory.OtherNumber:
+					return UnicodeCategory.OtherNumber;
+			}
+		}
+
+		public static UnicodeCategory Categorize(char c)
+		{
+			return Simplify(char.GetUnicodeCategory(c));
+		}
+	}
+
     public class Template
     {
 
@@ -414,12 +595,14 @@ public class pwgen
         public readonly String Name;
         public readonly CharRanges First;
         public readonly CharRanges Ranges;
+		public readonly ComplexityConstraints Complexity;
 
         public Template(String n)
         {
             Name = n;
             First = new CharRanges();
             Ranges = new CharRanges();
+			Complexity = new ComplexityConstraints();
         }
 
         public Template Add(CharRange r)
@@ -517,7 +700,7 @@ public class pwgen
                 buf.Append(c);
                 bits -= b;
             }
-            return buf.ToString();
+            return Complexity.MakeAcceptable(buf.ToString());
         }
 
         public string Generate(int bits)
@@ -535,9 +718,15 @@ public class pwgen
             Hexadecimal = new Template("Hexadecimal")
 					.Add('0', '9')
                 	.Add('A', 'F');
+			Hexadecimal.Complexity
+					.Add(UnicodeCategory.UppercaseLetter, 1)
+					.Add(UnicodeCategory.OtherNumber, 1);
             Alphanumeric = new Template("Alphanumeric")
 					.Add('0', '9')
                     .Add('a', 'z');
+			Alphanumeric.Complexity
+					.Add(UnicodeCategory.LowercaseLetter, 1)
+					.Add(UnicodeCategory.OtherNumber, 1);
             NCName = new Template("NCName")
 					.AddFirst('A', 'Z')
                     .AddFirst('a', 'z')
@@ -548,11 +737,27 @@ public class pwgen
 					.Add('_')
 					.Add('.')
 					.Add('-');
+			NCName.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1)
+				.Add(UnicodeCategory.OtherNumber, 1);
             QWERTY = new Template("QWERTY")
 					.Add('!', '~');
+			QWERTY.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1)
+				.Add(UnicodeCategory.OtherNumber, 1)
+				.Add(UnicodeCategory.OtherPunctuation, 1)
+				.Add(UnicodeCategory.OtherSymbol, 1);
             Latin_1 = new Template("Latin-1")
 					.Add('!', '~')
 					.Add('\u00A1', '\u00FF');
+			Latin_1.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1)
+				.Add(UnicodeCategory.OtherNumber, 1)
+				.Add(UnicodeCategory.OtherPunctuation, 1)
+				.Add(UnicodeCategory.OtherSymbol, 1);
             LGC = new Template("LGC")
 					.Add('!', '~')
                     .Add('\u00A1', '\u024F')
@@ -565,6 +770,12 @@ public class pwgen
 					.Add('\u03A3', '\u03FF')
                     .Add('\u0400', '\u0482')
 					.Add('\u048A', '\u04FF');
+			LGC.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1)
+				.Add(UnicodeCategory.OtherNumber, 1)
+				.Add(UnicodeCategory.OtherPunctuation, 1)
+				.Add(UnicodeCategory.OtherSymbol, 1);
 			Xmlid = new Template("xml:id")
 					.AddFirst('A', 'Z')
                     .AddFirst('_')
@@ -600,6 +811,10 @@ public class pwgen
 					.Add('\u00B7')
                     .Add('\u0300', '\u036F')
 					.Add('\u203F', '\u2040');
+			Xmlid.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1)
+				.Add(UnicodeCategory.OtherNumber, 1);
             Nmtoken = new Template("Nmtoken")
 					.Add('A', 'Z')
 					.Add('_')
@@ -621,6 +836,9 @@ public class pwgen
 					.Add('\u00B7')
 					.Add('\u0300', '\u036F')
 					.Add('\u203F', '\u2040');
+			Nmtoken.Complexity
+				.Add(UnicodeCategory.UppercaseLetter, 1)
+				.Add(UnicodeCategory.LowercaseLetter, 1);
             Templates = new Template[] { Decimal, Hexadecimal, Alphanumeric,
                     NCName, QWERTY, Latin_1, LGC, Xmlid, Nmtoken };
         }
