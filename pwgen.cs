@@ -7,18 +7,19 @@ using System.Reflection;
 
 [assembly: AssemblyCompany("Michael Trenholm-Boyle")]
 [assembly: AssemblyCopyright("© 2016 Michael Trenholm-Boyle")]
-[assembly: AssemblyTitle("Generates random passwords.")]
+[assembly: AssemblyTitle("Generates passwords encoded in various formats from random bits or PBKDF2 hashes.")]
 [assembly: AssemblyProduct(@"Michael Trenholm-Boyle’s Ad Hoc .NET Tools Suite")]
 [assembly: AssemblyVersion("0.1.*")]
 
 public class pwgen
 {
 
+	static readonly string syntax = "syntax: pwgen (bits=80)? (template=all)? (key:hex|(pw:utf salt:[uri|hex] iters=1000))?";
     public static void Main(string[] args)
     {
-
         int strength = 80;
         string template = null;
+		byte[] entropy = null;
         if (args.Length > 0)
         {
             try
@@ -27,7 +28,7 @@ public class pwgen
             }
             catch (Exception)
             {
-                Console.Error.WriteLine("syntax: pwgen (bits=80)? (template=all)?");
+                Console.Error.WriteLine(syntax);
                 Console.Error.WriteLine("templates:");
                 foreach (Template t in Template.Templates)
                 {
@@ -36,35 +37,113 @@ public class pwgen
                 Environment.Exit(0);
                 return;
             }
+			if(strength < 8 || strength % 8 != 0)
+			{
+				strength = ((Math.Max(strength, 8) + 7) / 8) * 8;
+				Console.Error.WriteLine(string.Format("warning: increasing strength to {0} bits", strength));
+			}
             if (args.Length > 1)
             {
-                foreach (Template t in Template.Templates)
-                {
-                    if (StringComparer.InvariantCultureIgnoreCase.Compare(args[1], t.Name) == 0)
-                    {
-                        template = t.Name;
-                        break;
-                    }
-                }
-                if (template == null)
-                {
-                    Console.Error.WriteLine("syntax: pwgen (bits=80)? (template=all)?");
-                    Console.Error.WriteLine("templates:");
-                    foreach (Template t in Template.Templates)
-                    {
-                        Console.Error.WriteLine(t.ToString());
-                    }
-                    Environment.Exit(1);
-                    return;
-                }
+				if(StringComparer.OrdinalIgnoreCase.Compare(args[1], "all") != 0
+					&& StringComparer.OrdinalIgnoreCase.Compare(args[1], "any") != 0
+					&& args[1] != "*")
+				{
+	                foreach (Template t in Template.Templates)
+	                {
+	                    if (StringComparer.InvariantCultureIgnoreCase.Compare(args[1], t.Name) == 0)
+	                    {
+	                        template = t.Name;
+	                        break;
+	                    }
+	                }
+	                if (template == null)
+	                {
+	                    Console.Error.WriteLine(syntax);
+	                    Console.Error.WriteLine("templates:");
+	                    foreach (Template t in Template.Templates)
+	                    {
+	                        Console.Error.WriteLine(t.ToString());
+	                    }
+	                    Environment.Exit(1);
+	                    return;
+	                }
+				}
+				if(args.Length > 2)
+				{
+					if(args.Length == 3)
+					{
+						entropy = hex(args[2]);
+						if(entropy.Length * 8 < strength)
+						{
+							Console.Error.WriteLine(string.Format("warning: requested strength={0} bits but key provided is only {1} bits; reducing strength", strength, entropy.Length * 8));
+							strength = entropy.Length * 8;
+						}
+						else if(entropy.Length * 8 > strength)
+						{
+							Console.Error.WriteLine(string.Format("warning: requested strength={0} bits but key provided is {1} bits; truncating key", strength, entropy.Length * 8));
+							byte[] buf = new byte[(strength + 7) / 8];
+							Array.Copy(entropy, 0, buf, 0, buf.Length);
+							entropy = buf;
+						}
+					}
+					else if(args.Length >= 4)
+					{
+						string pw = args[2];
+						byte[] salt;
+						if(StringComparer.OrdinalIgnoreCase.Compare(args[3], "random") == 0)
+						{
+							salt = rand((strength + 7) / 8);
+							Console.Error.WriteLine(string.Format("salt= {0}", hex(salt)));
+						}
+						else if(isuri(args[3]))
+						{
+							salt = Encoding.UTF8.GetBytes(args[3]);
+						}
+						else
+						{
+							salt = hex(args[3]);
+						}
+						if(salt.Length < 8)
+						{
+							Console.Error.WriteLine("warning: padding salt with zeros on the right to a minimum of 64 bits");
+							byte[] buf = new byte[8];
+							Array.Copy(salt, 0, buf, 0, salt.Length);
+							salt = buf;
+						}
+						int iters = 1000;
+						if(args.Length > 4)
+						{
+							try
+							{
+								iters = int.Parse(args[4]);
+							}
+							catch(Exception)
+							{
+								Console.Error.WriteLine(syntax);
+				                Console.Error.WriteLine("templates:");
+				                foreach (Template t in Template.Templates)
+				                {
+				                    Console.Error.WriteLine(t.ToString());
+				                }
+				                Environment.Exit(0);
+				                return;
+							}
+						}
+						Rfc2898DeriveBytes kdf = new Rfc2898DeriveBytes(Encoding.UTF8.GetBytes(pw), salt, iters);
+						entropy = kdf.GetBytes((strength + 7) / 8);
+					}
+				}
             }
         }
-
+		if(entropy == null)
+		{
+			entropy = rand((strength + 7) / 8);
+		}
         foreach (Template t in Template.Templates)
         {
             if (template == null || t.Name.Equals(template))
             {
-                String pw = t.Generate(strength);
+                String pw = t.Encode(entropy);
                 if (template == null)
                 {
                     Console.WriteLine(string.Format(
@@ -78,6 +157,86 @@ public class pwgen
         }
         Environment.Exit(0);
     }
+
+	private static bool isuri(string u)
+	{
+		Uri uri;
+		return Uri.TryCreate(u, UriKind.Absolute, out uri);
+	}
+
+	private static int hex(char c)
+	{
+		return (c >= '0' && c <= '9') ? (c - '0') : ((c >= 'A' && c <= 'F') ? (10 + (c - 'A')) : ((c >= 'a' && c <= 'f') ? (10 + (c - 'a')) : -1));
+	}
+
+	private static byte[] hex(string arg)
+	{
+		int n = 0;
+		for(int i = 0; i < arg.Length; ++i)
+		{
+			if(hex(arg[i]) >= 0)
+			{
+				n++;
+			}
+		}
+		byte[] buf = new byte[(n+1)/2];
+		n = -1;
+		for(int i = 0, j = 0; i < arg.Length; ++i)
+		{
+			int c = hex(arg[i]);
+			if(c >= 0)
+			{
+				if(n < 0)
+				{
+					n = c;
+				}
+				else
+				{
+					buf[j] = (byte)((n << 4) | c);
+					++j;
+					n = -1;
+				}
+			}
+		}
+		if(n >= 0)
+		{
+			buf[buf.Length - 1] = (byte)(n << 4);
+		}
+		return buf;
+	}
+
+	private static byte[] rand(int len)
+	{
+		byte[] buf = new byte[len];
+		using(RNGCryptoServiceProvider prng = new RNGCryptoServiceProvider())
+		{
+			prng.GetBytes(buf);
+		}
+		return buf;
+	}
+
+	private static char hex(int i)
+	{
+		if(i < 10)
+		{
+			return (char)('0' + i);
+		}
+		else
+		{
+			return (char)('a' + (i - 10));
+		}
+	}
+
+	private static string hex(byte[] arg)
+	{
+		StringBuilder buf = new StringBuilder(arg.Length * 2);
+		for(int i = 0; i < arg.Length; ++i)
+		{
+			buf.Append(hex(arg[i] >> 4));
+			buf.Append(hex(arg[i] & 15));
+		}
+		return buf.ToString();
+	}
 
     public class Template
     {
