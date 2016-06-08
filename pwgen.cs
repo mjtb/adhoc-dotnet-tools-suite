@@ -415,7 +415,16 @@ public class pwgen
 
 		public static UnicodeCategory Categorize(char c)
 		{
-			return Simplify(char.GetUnicodeCategory(c));
+			UnicodeCategory cat = Simplify(char.GetUnicodeCategory(c));
+			string substitutes = Substitutes(cat);
+			if(string.IsNullOrEmpty(substitutes) || substitutes.IndexOf(c) < 0)
+			{
+				return UnicodeCategory.OtherNotAssigned;
+			}
+			else
+			{
+				return cat;
+			}
 		}
 	}
 
