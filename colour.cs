@@ -6,7 +6,8 @@ using System.Reflection;
 [assembly: AssemblyCompany("Michael Trenholm-Boyle")]
 [assembly: AssemblyCopyright("© 2016 Michael Trenholm-Boyle")]
 [assembly: AssemblyProduct(@"Michael Trenholm-Boyle’s Ad Hoc .NET Tools Suite")]
-[assembly: AssemblyTitle("Performs arithmetic on RGB and HSL colours.")]
+[assembly: AssemblyTitle(@"Colour Arithmetic")]
+[assembly: AssemblyDescription("Performs arithmetic on RGB, HSL and HWB colours.")]
 [assembly: AssemblyVersion("0.1.*")]
 
 class color
@@ -16,6 +17,7 @@ class color
         private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
             RGB = new Regex("rgb\\(\\s*(?<r>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<g>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
             HSL = new Regex("hsl\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<s>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
+            HWB = new Regex("hwb\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<w>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
             HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
         private static readonly Color[] NAMED = new Color[]
         {
@@ -167,7 +169,7 @@ class color
             new Color("yellow", 255,255,0),
             new Color("yellowgreen", 154,205,50)
         };
-        public readonly double r, g, b, h, s, l;
+        public readonly double r, g, b, h, s, l, w, k;
         public readonly string name;
 
         private static double pn(string i, double q = 255.0)
@@ -232,6 +234,57 @@ class color
             }
         }
 
+        private static void hwb(double r, double g, double b, out double h, out double w, out double k)
+        {
+            double M = Math.Max(Math.Max(r, g), b);
+            double m = Math.Min(Math.Min(r, g), b);
+            double C = M - m;
+            if (C == 0)
+            {
+                h = 0;
+            }
+            else if(M == r)
+            {
+                h = (g - b) / C;
+            }
+            else if(M == g)
+            {
+                h = (b - r) / C + 2;
+            }
+            else
+            {
+                h = (r - g) / C + 4;
+            }
+            h %= 6;
+            while(h < 0)
+            {
+                h += 6;
+            }
+            h /= 6;
+            double V = M;
+            double S = (C == 0) ? 0 : (C / V);
+            w = (1 - S) * V;
+            k = 1 - V;
+        }
+
+        private static void hwb_to_rgb(double h, double w, double k, out double r, out double g, out double b)
+        {
+            double t = w + k;
+            if(t > 1)
+            {
+                w /= t;
+                k /= t;
+            }
+            t = 1 - w - k;
+            rgb(h, 1, 0.5, out r, out g, out b);
+            r *= t;
+            r += w;
+            g *= t;
+            g += w;
+            b *= t;
+            b += w;
+        }
+
         private static double rgb(double m1, double m2, double h)
         {
             if(h < 0)
@@ -259,6 +312,7 @@ class color
                 return m1;
             }
         }
+
         private static void rgb(double h, double s, double l, out double r, out double g, out double b)
         {
             double m2 = l <= 0.5 ? l * (s + 1) : (l + s - l * s);
@@ -270,7 +324,7 @@ class color
 
         private Color(string name_, int r__, int g__, int b__)
         {
-            double r_ = r__ / 255.0, g_ = g__ / 255.0, b_ = b__ / 255.0;
+            double r_ = r__ / 255.0, g_ = g__ / 255.0, b_ = b__ / 255.0, t_ = double.NaN;
             if (string.IsNullOrWhiteSpace(name_))
             {
                 foreach (Color c in NAMED)
@@ -287,6 +341,7 @@ class color
             this.g = g_;
             this.b = b_;
             hsl(r_, g_, b_, out this.h, out this.s, out this.l);
+            hwb(r_, g_, b_, out t_, out this.w, out this.k);
         }
 
         public override int GetHashCode()
@@ -317,7 +372,7 @@ class color
 
         public Color(string input)
         {
-            double r_ = double.NaN, g_ = double.NaN, b_ = double.NaN, h_ = double.NaN, s_ = double.NaN, l_ = double.NaN;
+            double r_ = double.NaN, g_ = double.NaN, b_ = double.NaN, h_ = double.NaN, s_ = double.NaN, l_ = double.NaN, w_ = double.NaN, k_ = double.NaN, t_ = double.NaN;
             string name_ = null;
             Match m = HEX6.Match(input);
             if (m.Success)
@@ -326,6 +381,7 @@ class color
                 g_ = int.Parse(m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
                 b_ = int.Parse(m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
                 hsl(r_, g_, b_, out h_, out s_, out l_);
+                hwb(r_, g_, b_, out t_, out w_, out k_);
             }
             else
             {
@@ -336,6 +392,7 @@ class color
                     g_ = pn(m.Groups["g"].ToString());
                     b_ = pn(m.Groups["b"].ToString());
                     hsl(r_, g_, b_, out h_, out s_, out l_);
+                    hwb(r_, g_, b_, out t_, out w_, out k_);
                 }
                 else
                 {
@@ -346,6 +403,7 @@ class color
                         s_ = double.Parse(m.Groups["s"].ToString().TrimEnd('%')) / 100.0;
                         l_ = double.Parse(m.Groups["l"].ToString().TrimEnd('%')) / 100.0;
                         rgb(h_, s_, l_, out r_, out g_, out b_);
+                        hwb(r_, g_, b_, out t_, out w_, out k_);
                     }
                     else
                     {
@@ -356,26 +414,41 @@ class color
                             g_ = int.Parse(m.Groups["g"].ToString() + m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
                             b_ = int.Parse(m.Groups["b"].ToString() + m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
                             hsl(r_, g_, b_, out h_, out s_, out l_);
+                            hwb(r_, g_, b_, out t_, out w_, out k_);
                         }
                         else
                         {
-                            foreach (Color c in NAMED)
+                            m = HWB.Match(input);
+                            if (m.Success)
                             {
-                                if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
-                                {
-                                    r_ = c.r;
-                                    g_ = c.g;
-                                    b_ = c.b;
-                                    h_ = c.h;
-                                    s_ = c.s;
-                                    l_ = c.l;
-                                    name_ = c.name;
-                                    break;
-                                }
+                                h_ = double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0;
+                                w_ = double.Parse(m.Groups["w"].ToString().TrimEnd('%')) / 100.0;
+                                k_ = double.Parse(m.Groups["b"].ToString().TrimEnd('%')) / 100.0;
+                                hwb_to_rgb(h_, w_, k_, out r_, out g_, out b_);
+                                hsl(r_, g_, b_, out t_, out s_, out l_);
                             }
-                            if (string.IsNullOrWhiteSpace(name_))
+                            else
                             {
-                                throw new ArgumentException(string.Format("Not a valid color: \"{0}\"", input));
+                                foreach (Color c in NAMED)
+                                {
+                                    if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
+                                    {
+                                        r_ = c.r;
+                                        g_ = c.g;
+                                        b_ = c.b;
+                                        h_ = c.h;
+                                        s_ = c.s;
+                                        l_ = c.l;
+                                        w_ = c.w;
+                                        k_ = c.k;
+                                        name_ = c.name;
+                                        break;
+                                    }
+                                }
+                                if (string.IsNullOrWhiteSpace(name_))
+                                {
+                                    throw new ArgumentException(string.Format("Not a valid color: \"{0}\"", input));
+                                }
                             }
                         }
                     }
@@ -402,6 +475,8 @@ class color
             this.h = h_;
             this.s = s_;
             this.l = l_;
+            this.w = w_;
+            this.k = k_;
             this.name = name_;
         }
 
@@ -410,7 +485,8 @@ class color
             NAME,
             HEX,
             RGB,
-            HSL
+            HSL,
+            HWB
         }
 
         public override string ToString()
@@ -438,6 +514,8 @@ class color
                     return string.Format("rgb({0},{1},{2})", pi(r), pi(g), pi(b));
                 case StringFormat.HSL:
                     return string.Format("hsl({0},{1}%,{2}%)", pi(h, 360), pi(s, 100), pi(l, 100));
+                case StringFormat.HWB:
+                    return string.Format("hwb({0},{1}%,{2}%)", pi(h, 360), pi(w, 100), pi(k, 100));
             }
         }
 
@@ -496,8 +574,8 @@ class color
             else
             {
                 Color c = new Color(a);
-                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}{4}", a, c.ToString(Color.StringFormat.HEX),
-                    c.ToString(Color.StringFormat.RGB), c.ToString(Color.StringFormat.HSL),
+                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", a, c.ToString(Color.StringFormat.HEX),
+                    c.ToString(Color.StringFormat.RGB), c.ToString(Color.StringFormat.HSL), c.ToString(Color.StringFormat.HWB),
                     string.IsNullOrWhiteSpace(c.name) ? "" : string.Format("\t{0}", c.name)));
                 bool pc = true;
                 if (op == '+')
@@ -523,8 +601,8 @@ class color
                 }
                 if (pc)
                 {
-                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}{4}", pop, current.Value.ToString(Color.StringFormat.HEX),
-                        current.Value.ToString(Color.StringFormat.RGB), current.Value.ToString(Color.StringFormat.HSL),
+                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", pop, current.Value.ToString(Color.StringFormat.HEX),
+                        current.Value.ToString(Color.StringFormat.RGB), current.Value.ToString(Color.StringFormat.HSL),  current.Value.ToString(Color.StringFormat.HWB),
                         string.IsNullOrWhiteSpace(current.Value.name) ? "" : string.Format("\t{0}", current.Value.name)));
                     pop = null;
                 }
