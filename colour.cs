@@ -573,39 +573,46 @@ class color
             }
             else
             {
-                Color c = new Color(a);
-                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", a, c.ToString(Color.StringFormat.HEX),
-                    c.ToString(Color.StringFormat.RGB), c.ToString(Color.StringFormat.HSL), c.ToString(Color.StringFormat.HWB),
-                    string.IsNullOrWhiteSpace(c.name) ? "" : string.Format("\t{0}", c.name)));
-                bool pc = true;
-                if (op == '+')
-                {
-                    current = current + c;
-                    op = '\0';
-                }
-                else if (op == '*')
-                {
-                    current = current * c;
-                    op = '\0';
-                }
-                else if (op == '~')
-                {
-                    current = Color.interpolate(current.Value, c, q);
-                    q = double.NaN;
-                    op = '\0';
-                }
-                else
-                {
-                    current = c;
-                    pc = false;
-                }
-                if (pc)
-                {
-                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", pop, current.Value.ToString(Color.StringFormat.HEX),
-                        current.Value.ToString(Color.StringFormat.RGB), current.Value.ToString(Color.StringFormat.HSL),  current.Value.ToString(Color.StringFormat.HWB),
-                        string.IsNullOrWhiteSpace(current.Value.name) ? "" : string.Format("\t{0}", current.Value.name)));
-                    pop = null;
-                }
+				try
+				{
+	                Color c = new Color(a);
+	                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", a, c.ToString(Color.StringFormat.HEX),
+	                    c.ToString(Color.StringFormat.RGB), c.ToString(Color.StringFormat.HSL), c.ToString(Color.StringFormat.HWB),
+	                    string.IsNullOrWhiteSpace(c.name) ? "" : string.Format("\t{0}", c.name)));
+	                bool pc = true;
+	                if (op == '+')
+	                {
+	                    current = current + c;
+	                    op = '\0';
+	                }
+	                else if (op == '*')
+	                {
+	                    current = current * c;
+	                    op = '\0';
+	                }
+	                else if (op == '~')
+	                {
+	                    current = Color.interpolate(current.Value, c, q);
+	                    q = double.NaN;
+	                    op = '\0';
+	                }
+	                else
+	                {
+	                    current = c;
+	                    pc = false;
+	                }
+	                if (pc)
+	                {
+	                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", pop, current.Value.ToString(Color.StringFormat.HEX),
+	                        current.Value.ToString(Color.StringFormat.RGB), current.Value.ToString(Color.StringFormat.HSL),  current.Value.ToString(Color.StringFormat.HWB),
+	                        string.IsNullOrWhiteSpace(current.Value.name) ? "" : string.Format("\t{0}", current.Value.name)));
+	                    pop = null;
+	                }
+				}
+				catch(Exception e)
+				{
+					Console.Error.WriteLine(e.Message);
+				}
             }
         }
     }
