@@ -90,7 +90,17 @@
   <Target Name="Colour" DependsOnTargets="MakeDirs">
 	<Csc OutputAssembly="$(OutDir)\colour.exe" Sources="colour.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
   </Target>
-  <Target Name="Build" DependsOnTargets="MkRes;Calendar;Enc;MkIcon;Ico2Png;ResPeel;JTime;SuDo;ColorMatcher;ColorPicker;Wrap;JavaClassFileVers;JsUTF;Pwgen;Paste;Pbkdf2;Colour" />
+  <Target Name="GitUploadPack" DependsOnTargets="MakeDirs">
+  	<Csc OutputAssembly="$(OutDir)\git-upload-pack.exe" Sources="gitwrap.cs;git_upload_pack.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="GitUploadArchive" DependsOnTargets="MakeDirs">
+  	<Csc OutputAssembly="$(OutDir)\git-upload-archive.exe" Sources="gitwrap.cs;git_upload_archive.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="GitReceivePack" DependsOnTargets="MakeDirs">
+  	<Csc OutputAssembly="$(OutDir)\git-receive-pack.exe" Sources="gitwrap.cs;git_receive_pack.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+  </Target>
+  <Target Name="GitWrap" DependsOnTargets="GitUploadPack;GitUploadArchive;GitReceivePack" />
+  <Target Name="Build" DependsOnTargets="MkRes;Calendar;Enc;MkIcon;Ico2Png;ResPeel;JTime;SuDo;ColorMatcher;ColorPicker;Wrap;JavaClassFileVers;JsUTF;Pwgen;Paste;Pbkdf2;Colour;GitWrap" />
   <Target Name="Clean">
 	<RemoveDir Condition="'$(BuildDirSafeToRemove)'=='Yes'" Directories="$(BuildDir)" />
 	<RemoveDir Condition="'$(OutDirSafeToRemove)'=='Yes'" Directories="$(OutDir)" />

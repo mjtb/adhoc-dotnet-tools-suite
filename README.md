@@ -6,9 +6,11 @@ development. The tools are largely written in C# using MSBuild as a build engine
 The tools include:
 
 *	`calendar` — displays a monthy calendar
-*	`colour` — perform arithmetic on RGB and HSL colours
+*	`colour` — perform arithmetic on RGB, HSL and HWB colours
 *	`colorpicker` & `colormatcher` — lookup colours
 *	`enc` — various text encoding utilities
+*	`git-upload-pack`, `git-receive-pack`, and `git-upload-archive` — wrappers to support git over
+		[PowerShell Win32-OpenSSH](https://github.com/PowerShell/Win32-OpenSSH)
 *	`ico2png` — extract .png files from a .ico file
 *	`jtime` — print date/time stamps in various Internet formats
 *	`mkicon` — create a .ico file from one or more .png files
