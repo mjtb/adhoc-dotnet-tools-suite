@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Reflection;
 
@@ -10,159 +11,150 @@ using System.Reflection;
 [assembly: AssemblyDescription("Performs arithmetic on RGB, HSL and HWB colours.")]
 [assembly: AssemblyVersion("0.1.*")]
 
-class color
-{
-    struct Color
+    struct Colour
     {
-        public static readonly Color[] NAMED = new Color[]
+        public static readonly Colour[] Standard = new Colour[]
         {
-            new Color("aliceblue", 240,248,255),
-            new Color("antiquewhite", 250,235,215),
-            new Color("aqua", 0,255,255),
-            new Color("aquamarine", 127,255,212),
-            new Color("azure", 240,255,255),
-            new Color("beige", 245,245,220),
-            new Color("bisque", 255,228,196),
-            new Color("black", 0,0,0),
-            new Color("blanchedalmond", 255,235,205),
-            new Color("blue", 0,0,255),
-            new Color("blueviolet", 138,43,226),
-            new Color("brown", 165,42,42),
-            new Color("burlywood", 222,184,135),
-            new Color("cadetblue", 95,158,160),
-            new Color("chartreuse", 127,255,0),
-            new Color("chocolate", 210,105,30),
-            new Color("coral", 255,127,80),
-            new Color("cornflowerblue", 100,149,237),
-            new Color("cornsilk", 255,248,220),
-            new Color("crimson", 220,20,60),
-            new Color("cyan", 0,255,255),
-            new Color("darkblue", 0,0,139),
-            new Color("darkcyan", 0,139,139),
-            new Color("darkgoldenrod", 184,134,11),
-            new Color("darkgray", 169,169,169),
-            new Color("darkgreen", 0,100,0),
-            new Color("darkgrey", 169,169,169),
-            new Color("darkkhaki", 189,183,107),
-            new Color("darkmagenta", 139,0,139),
-            new Color("darkolivegreen", 85,107,47),
-            new Color("darkorange", 255,140,0),
-            new Color("darkorchid", 153,50,204),
-            new Color("darkred", 139,0,0),
-            new Color("darksalmon", 233,150,122),
-            new Color("darkseagreen", 143,188,143),
-            new Color("darkslateblue", 72,61,139),
-            new Color("darkslategray", 47,79,79),
-            new Color("darkslategrey", 47,79,79),
-            new Color("darkturquoise", 0,206,209),
-            new Color("darkviolet", 148,0,211),
-            new Color("deeppink", 255,20,147),
-            new Color("deepskyblue", 0,191,255),
-            new Color("dimgray", 105,105,105),
-            new Color("dimgrey", 105,105,105),
-            new Color("dodgerblue", 30,144,255),
-            new Color("firebrick", 178,34,34),
-            new Color("floralwhite", 255,250,240),
-            new Color("forestgreen", 34,139,34),
-            new Color("fuchsia", 255,0,255),
-            new Color("gainsboro", 220,220,220),
-            new Color("ghostwhite", 248,248,255),
-            new Color("gold", 255,215,0),
-            new Color("goldenrod", 218,165,32),
-            new Color("gray", 128,128,128),
-            new Color("green", 0,128,0),
-            new Color("greenyellow", 173,255,47),
-            new Color("grey", 128,128,128),
-            new Color("honeydew", 240,255,240),
-            new Color("hotpink", 255,105,180),
-            new Color("indianred", 205,92,92),
-            new Color("indigo", 75,0,130),
-            new Color("ivory", 255,255,240),
-            new Color("khaki", 240,230,140),
-            new Color("lavender", 230,230,250),
-            new Color("lavenderblush", 255,240,245),
-            new Color("lawngreen", 124,252,0),
-            new Color("lemonchiffon", 255,250,205),
-            new Color("lightblue", 173,216,230),
-            new Color("lightcoral", 240,128,128),
-            new Color("lightcyan", 224,255,255),
-            new Color("lightgoldenrodyellow", 250,250,210),
-            new Color("lightgray", 211,211,211),
-            new Color("lightgreen", 144,238,144),
-            new Color("lightgrey", 211,211,211),
-            new Color("lightpink", 255,182,193),
-            new Color("lightsalmon", 255,160,122),
-            new Color("lightseagreen", 32,178,170),
-            new Color("lightskyblue", 135,206,250),
-            new Color("lightslategray", 119,136,153),
-            new Color("lightslategrey", 119,136,153),
-            new Color("lightsteelblue", 176,196,222),
-            new Color("lightyellow", 255,255,224),
-            new Color("lime", 0,255,0),
-            new Color("limegreen", 50,205,50),
-            new Color("linen", 250,240,230),
-            new Color("magenta", 255,0,255),
-            new Color("maroon", 128,0,0),
-            new Color("mediumaquamarine", 102,205,170),
-            new Color("mediumblue", 0,0,205),
-            new Color("mediumorchid", 186,85,211),
-            new Color("mediumpurple", 147,112,219),
-            new Color("mediumseagreen", 60,179,113),
-            new Color("mediumslateblue", 123,104,238),
-            new Color("mediumspringgreen", 0,250,154),
-            new Color("mediumturquoise", 72,209,204),
-            new Color("mediumvioletred", 199,21,133),
-            new Color("midnightblue", 25,25,112),
-            new Color("mintcream", 245,255,250),
-            new Color("mistyrose", 255,228,225),
-            new Color("moccasin", 255,228,181),
-            new Color("navajowhite", 255,222,173),
-            new Color("navy", 0,0,128),
-            new Color("oldlace", 253,245,230),
-            new Color("olive", 128,128,0),
-            new Color("olivedrab", 107,142,35),
-            new Color("orange", 255,165,0),
-            new Color("orangered", 255,69,0),
-            new Color("orchid", 218,112,214),
-            new Color("palegoldenrod", 238,232,170),
-            new Color("palegreen", 152,251,152),
-            new Color("paleturquoise", 175,238,238),
-            new Color("palevioletred", 219,112,147),
-            new Color("papayawhip", 255,239,213),
-            new Color("peachpuff", 255,218,185),
-            new Color("peru", 205,133,63),
-            new Color("pink", 255,192,203),
-            new Color("plum", 221,160,221),
-            new Color("powderblue", 176,224,230),
-            new Color("purple", 128,0,128),
-            new Color("red", 255,0,0),
-            new Color("rosybrown", 188,143,143),
-            new Color("royalblue", 65,105,225),
-            new Color("saddlebrown", 139,69,19),
-            new Color("salmon", 250,128,114),
-            new Color("sandybrown", 244,164,96),
-            new Color("seagreen", 46,139,87),
-            new Color("seashell", 255,245,238),
-            new Color("sienna", 160,82,45),
-            new Color("silver", 192,192,192),
-            new Color("skyblue", 135,206,235),
-            new Color("slateblue", 106,90,205),
-            new Color("slategray", 112,128,144),
-            new Color("slategrey", 112,128,144),
-            new Color("snow", 255,250,250),
-            new Color("springgreen", 0,255,127),
-            new Color("steelblue", 70,130,180),
-            new Color("tan", 210,180,140),
-            new Color("teal", 0,128,128),
-            new Color("thistle", 216,191,216),
-            new Color("tomato", 255,99,71),
-            new Color("turquoise", 64,224,208),
-            new Color("violet", 238,130,238),
-            new Color("wheat", 245,222,179),
-            new Color("white", 255,255,255),
-            new Color("whitesmoke", 245,245,245),
-            new Color("yellow", 255,255,0),
-            new Color("yellowgreen", 154,205,50)
+            new Colour("alice blue", 240,248,255),
+            new Colour("antique white", 250,235,215),
+            new Colour("aqua", 0,255,255),
+            new Colour("aquamarine", 127,255,212),
+            new Colour("azure", 240,255,255),
+            new Colour("beige", 245,245,220),
+            new Colour("bisque", 255,228,196),
+            new Colour("black", 0,0,0),
+            new Colour("blanched almond", 255,235,205),
+            new Colour("blue", 0,0,255),
+            new Colour("blue violet", 138,43,226),
+            new Colour("brown", 165,42,42),
+            new Colour("burly wood", 222,184,135),
+            new Colour("cadet blue", 95,158,160),
+            new Colour("chartreuse", 127,255,0),
+            new Colour("chocolate", 210,105,30),
+            new Colour("coral", 255,127,80),
+            new Colour("cornflower blue", 100,149,237),
+            new Colour("cornsilk", 255,248,220),
+            new Colour("crimson", 220,20,60),
+            new Colour("cyan", 0,255,255),
+            new Colour("dark blue", 0,0,139),
+            new Colour("dark cyan", 0,139,139),
+            new Colour("dark goldenrod", 184,134,11),
+            new Colour("dark green", 0,100,0),
+            new Colour("dark grey", 169,169,169),
+            new Colour("dark khaki", 189,183,107),
+            new Colour("dark magenta", 139,0,139),
+            new Colour("dark olive green", 85,107,47),
+            new Colour("dark orange", 255,140,0),
+            new Colour("dark orchid", 153,50,204),
+            new Colour("dark red", 139,0,0),
+            new Colour("dark salmon", 233,150,122),
+            new Colour("dark sea green", 143,188,143),
+            new Colour("dark slate blue", 72,61,139),
+            new Colour("dark slate grey", 47,79,79),
+            new Colour("dark turquoise", 0,206,209),
+            new Colour("dark violet", 148,0,211),
+            new Colour("deep pink", 255,20,147),
+            new Colour("deep sky blue", 0,191,255),
+            new Colour("dim grey", 105,105,105),
+            new Colour("dodger blue", 30,144,255),
+            new Colour("firebrick", 178,34,34),
+            new Colour("floral white", 255,250,240),
+            new Colour("forest green", 34,139,34),
+            new Colour("fuchsia", 255,0,255),
+            new Colour("gainsboro", 220,220,220),
+            new Colour("ghost white", 248,248,255),
+            new Colour("gold", 255,215,0),
+            new Colour("goldenrod", 218,165,32),
+            new Colour("green", 0,128,0),
+            new Colour("green yellow", 173,255,47),
+            new Colour("grey", 128,128,128),
+            new Colour("honeydew", 240,255,240),
+            new Colour("hot pink", 255,105,180),
+            new Colour("indian red", 205,92,92),
+            new Colour("indigo", 75,0,130),
+            new Colour("ivory", 255,255,240),
+            new Colour("khaki", 240,230,140),
+            new Colour("lavender", 230,230,250),
+            new Colour("lavender blush", 255,240,245),
+            new Colour("lawn green", 124,252,0),
+            new Colour("lemon chiffon", 255,250,205),
+            new Colour("light blue", 173,216,230),
+            new Colour("light coral", 240,128,128),
+            new Colour("light cyan", 224,255,255),
+            new Colour("light goldenrod yellow", 250,250,210),
+            new Colour("light green", 144,238,144),
+            new Colour("light grey", 211,211,211),
+            new Colour("light pink", 255,182,193),
+            new Colour("light salmon", 255,160,122),
+            new Colour("light sea green", 32,178,170),
+            new Colour("light sky blue", 135,206,250),
+            new Colour("light slate grey", 119,136,153),
+            new Colour("light steel blue", 176,196,222),
+            new Colour("light yellow", 255,255,224),
+            new Colour("lime", 0,255,0),
+            new Colour("lime green", 50,205,50),
+            new Colour("linen", 250,240,230),
+            new Colour("magenta", 255,0,255),
+            new Colour("maroon", 128,0,0),
+            new Colour("medium aquamarine", 102,205,170),
+            new Colour("medium blue", 0,0,205),
+            new Colour("medium orchid", 186,85,211),
+            new Colour("medium purple", 147,112,219),
+            new Colour("medium sea green", 60,179,113),
+            new Colour("medium slate blue", 123,104,238),
+            new Colour("medium spring green", 0,250,154),
+            new Colour("medium turquoise", 72,209,204),
+            new Colour("medium violet red", 199,21,133),
+            new Colour("midnight blue", 25,25,112),
+            new Colour("mint cream", 245,255,250),
+            new Colour("misty rose", 255,228,225),
+            new Colour("moccasin", 255,228,181),
+            new Colour("navajo white", 255,222,173),
+            new Colour("navy", 0,0,128),
+            new Colour("old lace", 253,245,230),
+            new Colour("olive", 128,128,0),
+            new Colour("olive drab", 107,142,35),
+            new Colour("orange", 255,165,0),
+            new Colour("orange red", 255,69,0),
+            new Colour("orchid", 218,112,214),
+            new Colour("pale goldenrod", 238,232,170),
+            new Colour("pale green", 152,251,152),
+            new Colour("pale turquoise", 175,238,238),
+            new Colour("pale violet red", 219,112,147),
+            new Colour("papaya whip", 255,239,213),
+            new Colour("peach puff", 255,218,185),
+            new Colour("peru", 205,133,63),
+            new Colour("pink", 255,192,203),
+            new Colour("plum", 221,160,221),
+            new Colour("powder blue", 176,224,230),
+            new Colour("purple", 128,0,128),
+            new Colour("red", 255,0,0),
+            new Colour("rosy brown", 188,143,143),
+            new Colour("royal blue", 65,105,225),
+            new Colour("saddle brown", 139,69,19),
+            new Colour("salmon", 250,128,114),
+            new Colour("sandy brown", 244,164,96),
+            new Colour("sea green", 46,139,87),
+            new Colour("seashell", 255,245,238),
+            new Colour("sienna", 160,82,45),
+            new Colour("silver", 192,192,192),
+            new Colour("sky blue", 135,206,235),
+            new Colour("slate blue", 106,90,205),
+            new Colour("slate grey", 112,128,144),
+            new Colour("snow", 255,250,250),
+            new Colour("spring green", 0,255,127),
+            new Colour("steel blue", 70,130,180),
+            new Colour("tan", 210,180,140),
+            new Colour("teal", 0,128,128),
+            new Colour("thistle", 216,191,216),
+            new Colour("tomato", 255,99,71),
+            new Colour("turquoise", 64,224,208),
+            new Colour("violet", 238,130,238),
+            new Colour("wheat", 245,222,179),
+            new Colour("white", 255,255,255),
+            new Colour("white smoke", 245,245,245),
+            new Colour("yellow", 255,255,0),
+            new Colour("yellow green", 154,205,50)
         };
 
 		public struct RGB
@@ -170,9 +162,34 @@ class color
 			private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
 	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<g>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
 				HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
+			private static double unlin(double v)
+			{
+				if(v <= 0.0031308)
+				{
+					return 12.92 * v;
+				}
+				else
+				{
+					return 1.055 * Math.Pow(v, 1 / 2.4) - 0.055;
+				}
+			}
+			private static double mklin(double V)
+			{
+				if(V <= 0.04045)
+				{
+					return V / 12.92;
+				}
+				else
+				{
+					return Math.Pow((V + 0.055) / 1.055, 2.4);
+				}
+			}
 			public double r;
+			public double linr { get { return mklin(r); } set { r = unlin(value); } }
 			public double g;
+			public double ling { get { return mklin(g); } set { g = unlin(value); } }
 			public double b;
+			public double linb { get { return mklin(b); } set { b = unlin(value); } }
 			public RGB(int rgb)
 			{
 				r = ((rgb >> 16) & 0xFF) / 255.0;
@@ -228,6 +245,11 @@ class color
 			public string ToDecimalString()
 			{
 				return string.Format(CultureInfo.InvariantCulture, "rgb({0},{1},{2})", pi(r), pi(g), pi(b));
+			}
+
+			public string ToPercentageString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "rgb({0:0.000}%,{1:0.000}%,{2:0.000}%)", r * 100.0, g * 100.0, b * 100.0);
 			}
 
 			public override string ToString()
@@ -454,17 +476,16 @@ class color
 
 		public struct XYZ
 		{
-			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<y>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<z>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
-			private static readonly double C = 1.0 / 0.17697;
+			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<y>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<z>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
 			private static readonly double[,] M = new double[3,3] {
-				{ 0.49000, 0.31000,  0.20000  },
-				{ 0.17697, 0.81240,  0.010630 },
-				{ 0.0000,  0.010000, 0.99000  }
+				{ 0.4124564, 0.3575761, 0.1804375 },
+				{ 0.2126729, 0.7151522, 0.0721750 },
+				{ 0.0193339, 0.1191920, 0.9503041 }
 			};
 			private static readonly double[,] N = new double[3,3] {
-				{  0.41847,    -0.15866,  -0.082835 },
-				{ -0.091169,    0.25243,   0.015708 },
-				{  0.00092090, -0.0025498, 0.17860  }
+				{  3.2404542, -1.5371385, -0.4985314 },
+				{ -0.9692660,  1.8760108,  0.0415560 },
+				{  0.0556434, -0.2040259,  1.0572252 }
 			};
 			public double x;
 			public double y;
@@ -476,34 +497,11 @@ class color
 				y = Y;
 				z = Z;
 			}
-			private static double compandout(double v)
+			public XYZ(RGB rgb)
 			{
-				if(v <= 0.0031308)
-				{
-					return 12.92 * v;
-				}
-				else
-				{
-					return 1.055 * Math.Pow(v, 1 / 2.4) - 0.055;
-				}
-			}
-			private static double compandin(double V)
-			{
-				if(V <= 0.04045)
-				{
-					return V / 12.92;
-				}
-				else
-				{
-					return Math.Pow((V + 0.055) / 1.055, 2.4);
-				}
-			}
-			public XYZ(RGB srgb)
-			{
-				RGB rgb = new RGB(compandin(srgb.r), compandin(srgb.g), compandin(srgb.b));
-				x = C * (M[0,0] * rgb.r + M[0,1] * rgb.g + M[0,2] * rgb.b);
-				y = C * (M[1,0] * rgb.r + M[1,1] * rgb.g + M[1,2] * rgb.b);
-				z = C * (M[2,0] * rgb.r + M[2,1] * rgb.g + M[2,2] * rgb.b);
+				x = M[0,0] * rgb.linr + M[0,1] * rgb.ling + M[0,2] * rgb.linb;
+				y = M[1,0] * rgb.linr + M[1,1] * rgb.ling + M[1,2] * rgb.linb;
+				z = M[2,0] * rgb.linr + M[2,1] * rgb.ling + M[2,2] * rgb.linb;
 			}
 			public static bool TryParse(string s, out XYZ xyz)
 			{
@@ -530,15 +528,42 @@ class color
 			}
 			public RGB ToRGB()
 			{
-				double r = N[0,0] * x + N[0,1] * y + N[0,1] * z;
-				double g = N[1,0] * x + N[1,1] * y + N[1,1] * z;
-				double b = N[2,0] * x + N[2,1] * y + N[2,1] * z;
-				return new RGB(compandout(r), compandout(g), compandout(b));
+				RGB rgb = new RGB();
+				rgb.linr = N[0,0] * x + N[0,1] * y + N[0,2] * z;
+				rgb.ling = N[1,0] * x + N[1,1] * y + N[1,2] * z;
+				rgb.linb = N[2,0] * x + N[2,1] * y + N[2,2] * z;
+				return rgb;
+			}
+			private static readonly double[,] D50 = new double[,] {
+				{  1.0478112, 0.0228866, -0.0501270 },
+				{  0.0295424, 0.9904844, -0.0170491 },
+				{ -0.0092345, 0.0150436,  0.7521316 }
+			};
+			private static readonly double[,] D65 = new double[,] {
+				{  0.9555766, -0.0230393, 0.0631636 },
+				{ -0.0282895,  1.0099416, 0.0210077 },
+				{  0.0122982, -0.0204830, 1.3299098 }
+			};
+			public XYZ ToD50()
+			{
+				XYZ d50 = new XYZ();
+				d50.x = D50[0,0] * x + D50[0,1] * y + D50[0,2] * z;
+				d50.y = D50[1,0] * x + D50[1,1] * y + D50[1,2] * z;
+				d50.z = D50[2,0] * x + D50[2,1] * y + D50[2,2] * z;
+				return d50;
+			}
+			public XYZ ToD65()
+			{
+				XYZ d65 = new XYZ();
+				d65.x = D65[0,0] * x + D65[0,1] * y + D65[0,2] * z;
+				d65.y = D65[1,0] * x + D65[1,1] * y + D65[1,2] * z;
+				d65.z = D65[2,0] * x + D65[2,1] * y + D65[2,2] * z;
+				return d65;
 			}
 		}
 		public struct LAB
 		{
-			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<a>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
+			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<a>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<b>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
 			public double l;
 			public double a;
 			public double b;
@@ -559,17 +584,30 @@ class color
 				lab = new LAB(double.NaN, double.NaN, double.NaN);
 				return false;
 			}
-			public LAB(RGB rgb)
+			public LAB(RGB rgb) : this(new XYZ(rgb)) { }
+			private const double K = 24389.0 / 27.0;
+			private const double E = 216.0 / 24389.0;
+			private static double labin(double v)
 			{
-				l = double.NaN;
-				a = double.NaN;
-				b = double.NaN;
+				if(v > E)
+				{
+					return Math.Pow(v, 1.0 / 3.0);
+				}
+				else
+				{
+					return (K * v + 16.0) / 116.0;
+				}
 			}
 			public LAB(XYZ xyz)
 			{
-				l = double.NaN;
-				a = double.NaN;
-				b = double.NaN;
+				XYZ d50 = xyz.ToD50();
+				XYZ f = new XYZ();
+				f.x = labin(d50.x / 0.9642);
+				f.y = labin(d50.y);
+				f.z = labin(d50.z / 0.8249);
+				l = (116.0 * f.y) - 16.0;
+				a = 500.0 * (f.x - f.y);
+				b = 200.0 * (f.y - f.z);
 			}
 			public override string ToString()
 			{
@@ -585,19 +623,123 @@ class color
 			}
 			public RGB ToRGB()
 			{
-				return new RGB(double.NaN, double.NaN, double.NaN);
+				return ToXYZ().ToRGB();
+			}
+			private static double labout(double v)
+			{
+				double v3 = Math.Pow(v, 3);
+				if(v3 > E)
+				{
+					return v3;
+				}
+				else
+				{
+					return (116.0 * v - 16.0) / K;
+				}
 			}
 			public XYZ ToXYZ()
 			{
-				return new XYZ(double.NaN, double.NaN, double.NaN);
+				XYZ f = new XYZ();
+				f.y = (l + 16.0) / 116.0;
+				f.x = a / 500.0 + f.y;
+				f.z = f.y - b / 200.0;
+				XYZ d50 = new XYZ();
+				d50.x = labout(f.x) * 0.9642;
+				d50.y = (l > (K * E) ? Math.Pow((l + 16.0) / 116.0, 3) : (l / K));
+				d50.z = labout(f.z) * 0.8249;
+				return d50.ToD65();
 			}
 		}
+
+		public struct LCH
+		{
+			private static readonly Regex RE = new Regex("lch\\(\\s*(?<l>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<c>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<h>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\u00b0?\\s*\\)");
+			public double l;
+			public double c;
+			public double h;
+			public LCH(double L, double C, double H)
+			{
+				l = L;
+				c = C;
+				h = H;
+			}
+			public LCH(LAB lab)
+			{
+				l = lab.l;
+				c = Math.Sqrt(lab.a * lab.a + lab.b * lab.b);
+				h = 180.0 / Math.PI * Math.Atan2(lab.b, lab.a);
+				while(h < 0)
+				{
+					h += 360;
+				}
+				while(h >= 360)
+				{
+					h -= 360;
+				}
+			}
+			public LCH(XYZ xyz) : this(new LAB(xyz)) {}
+			public LCH(RGB rgb) : this(new LAB(rgb)) {}
+			public static bool TryParse(string s, out LCH lch)
+			{
+				Match m = RE.Match(s);
+				if (m.Success)
+				{
+					lch = new LCH(pn(m.Groups["l"].ToString(), 1), pn(m.Groups["c"].ToString(), 1), pn(m.Groups["h"].ToString(), 1));
+					return true;
+				}
+				lch = new LCH(double.NaN, double.NaN, double.NaN);
+				return false;
+			}
+			public override int GetHashCode()
+			{
+				return (pi(l, 100, 0, 1023) << 20) | (pi(c, 230, 0, 1023) << 10) | pi(h, 360, 0, 1023);
+			}
+			public override bool Equals(object o)
+			{
+				return (o is LCH) && (o.GetHashCode() == GetHashCode());
+			}
+			public override string ToString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.000} {1:0.000} {2:0.000})", l, c, h);
+			}
+			public LAB ToLAB()
+			{
+				double rad = Math.PI / 180.0 * h;
+				return new LAB(l, c * Math.Cos(rad), c * Math.Sin(rad));
+			}
+			public RGB ToRGB()
+			{
+				return ToLAB().ToRGB();
+			}
+		}
+
         public readonly RGB rgb;
 		public readonly HSL hsl;
 		public readonly HWB hwb;
-		public readonly LAB lab;
 		public readonly XYZ xyz;
+		public readonly LAB lab;
+		public readonly LCH lch;
         public readonly string name;
+		public string keyword
+		{
+			get
+			{
+				if(string.IsNullOrEmpty(name))
+				{
+					return string.Empty;
+				}
+				StringBuilder buf = new StringBuilder();
+				for(int i = 0; i < name.Length; ++i)
+				{
+					char c = name[i];
+					if(char.IsLetter(c))
+					{
+						buf.Append(c);
+					}
+				}
+				return buf.ToString();
+			}
+		}
 
         private static double pn(string i, double q = 255.0)
         {
@@ -635,16 +777,17 @@ class color
 			return Math.Max(0, Math.Min(q, (int)Math.Round((d - n) / (m - n) * q)));
 		}
 
-		private Color(string name_, int r, int g, int b)
+		private Colour(string name_, int r, int g, int b)
         {
             rgb = new RGB(r / 255.0, g / 255.0, b / 255.0);
 			hsl = new HSL(rgb);
 			hwb = new HWB(rgb);
-			lab = new LAB(rgb);
 			xyz = new XYZ(rgb);
+			lab = new LAB(xyz);
+			lch = new LCH(lab);
             if (string.IsNullOrWhiteSpace(name_))
             {
-                foreach (Color c in NAMED)
+                foreach (Colour c in Standard)
                 {
                     if (c.rgb.Equals(rgb))
                     {
@@ -663,9 +806,9 @@ class color
 
         public override bool Equals(object obj)
         {
-            if (obj is Color)
+            if (obj is Colour)
             {
-                Color x = (Color)obj;
+                Colour x = (Colour)obj;
                 return rgb.Equals(x.rgb);
             }
             else
@@ -674,36 +817,32 @@ class color
             }
         }
 
-        public Color(string input)
+        public Colour(string input)
         {
 			string name_ = null;
 			if(RGB.TryParse(input, out rgb))
 			{
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
-				lab = new LAB(rgb);
 				xyz = new XYZ(rgb);
+				lab = new LAB(xyz);
+				lch = new LCH(lab);
 			}
 			else if(HSL.TryParse(input, out hsl))
 			{
 				rgb = hsl.ToRGB();
 				hwb = new HWB(rgb);
-				lab = new LAB(rgb);
 				xyz = new XYZ(rgb);
+				lab = new LAB(xyz);
+				lch = new LCH(lab);
 			}
 			else if(HWB.TryParse(input, out hwb))
 			{
 				rgb = hwb.ToRGB();
 				hsl = new HSL(rgb);
-				lab = new LAB(rgb);
 				xyz = new XYZ(rgb);
-			}
-			else if(LAB.TryParse(input, out lab))
-			{
-				rgb = lab.ToRGB();
-				hsl = new HSL(rgb);
-				hwb = new HWB(rgb);
-				xyz = new XYZ(rgb);
+				lab = new LAB(xyz);
+				lch = new LCH(lab);
 			}
 			else if(XYZ.TryParse(input, out xyz))
 			{
@@ -711,30 +850,48 @@ class color
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				lab = new LAB(xyz);
+				lch = new LCH(lab);
+			}
+			else if(LAB.TryParse(input, out lab))
+			{
+				xyz = lab.ToXYZ();
+				rgb = xyz.ToRGB();
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
+				lch = new LCH(lab);
+			}
+			else if(LCH.TryParse(input, out lch))
+			{
+				lab = lch.ToLAB();
+				xyz = lab.ToXYZ();
+				rgb = xyz.ToRGB();
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
 			}
 			else
 			{
-				foreach (Color c in NAMED)
+				foreach (Colour c in Standard)
 				{
 					if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
 					{
 						rgb = c.rgb;
 						hsl = c.hsl;
 						hwb = c.hwb;
-						lab = c.lab;
 						xyz = c.xyz;
+						lab = c.lab;
+						lch = c.lch;
 						name_ = c.name;
 						break;
 					}
 				}
 				if (string.IsNullOrWhiteSpace(name_))
 				{
-					throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid color: \"{0}\"", input));
+					throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid colour: \"{0}\"", input));
 				}
 			}
             if (string.IsNullOrWhiteSpace(name_))
             {
-                foreach (Color c in NAMED)
+                foreach (Colour c in Standard)
                 {
                     if (c.rgb.Equals(rgb))
                     {
@@ -758,26 +915,67 @@ class color
             }
         }
 
-        public static Color operator+(Color a, Color b)
+        public static Colour operator+(Colour a, Colour b)
         {
-            return new Color(null, pi(a.rgb.r + b.rgb.r), pi(a.rgb.g + b.rgb.g), pi(a.rgb.b + b.rgb.b));
+            return new Colour(null, pi(a.rgb.r + b.rgb.r), pi(a.rgb.g + b.rgb.g), pi(a.rgb.b + b.rgb.b));
         }
 
-        public static Color operator*(Color a, Color b)
+        public static Colour operator*(Colour a, Colour b)
         {
-            return new Color(null, pi(a.rgb.r * b.rgb.r), pi(a.rgb.g * b.rgb.g), pi(a.rgb.b * b.rgb.b));
+            return new Colour(null, pi(a.rgb.r * b.rgb.r), pi(a.rgb.g * b.rgb.g), pi(a.rgb.b * b.rgb.b));
         }
 
-        public static Color interpolate(Color a, Color b, double q)
+        public static Colour interpolate(Colour a, Colour b, double q)
         {
             double qq = 1 - q;
-            return new Color(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
+            return new Colour(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
         }
-    }
 
+#if COLOUR_INCLUDE_MAIN
+	static string format(Colour c, string TAB = "\t", string NL = "")
+	{
+		StringBuilder buf = new StringBuilder();
+		buf.Append(TAB);
+		buf.Append(c.rgb.ToHexString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.rgb.ToDecimalString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.rgb.ToPercentageString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.hsl.ToString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.hwb.ToString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append("D65: ");
+		buf.Append(c.xyz.ToString());
+		buf.Append(", D50: ");
+		buf.Append(c.xyz.ToD50().ToString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.lab.ToString());
+		buf.Append(NL);
+		buf.Append(TAB);
+		buf.Append(c.lch.ToString());
+		if(!string.IsNullOrWhiteSpace(c.name))
+		{
+			buf.Append(NL);
+			buf.Append(TAB);
+			buf.Append(c.keyword);
+		}
+		return buf.ToString();
+	}
+	static void print(string a, Colour c, string TAB = "\t", string NL1 = "\n", string NL2 = "\n")
+	{
+		Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}:{1}{2}", a, NL1, format(c, TAB, NL2)));
+	}
     static void Main(string[] args)
     {
-        Color? current = null;
+        Colour? current = null;
         double q = double.NaN;
         char op = '\0';
         string pop = null;
@@ -814,10 +1012,8 @@ class color
             {
 				try
 				{
-	                Color c = new Color(a);
-	                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}\t{5}{6}", a, c.rgb.ToHexString(),
-	                    c.rgb.ToDecimalString(), c.hsl.ToString(), c.hwb.ToString(), c.xyz.ToString(),
-	                    string.IsNullOrWhiteSpace(c.name) ? "" : string.Format("\t{0}", c.name)));
+	                Colour c = new Colour(a);
+					print(a, c);
 	                bool pc = true;
 	                if (op == '+')
 	                {
@@ -831,7 +1027,7 @@ class color
 	                }
 	                else if (op == '~')
 	                {
-	                    current = Color.interpolate(current.Value, c, q);
+	                    current = Colour.interpolate(current.Value, c, q);
 	                    q = double.NaN;
 	                    op = '\0';
 	                }
@@ -842,10 +1038,7 @@ class color
 	                }
 	                if (pc)
 	                {
-	                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}\t{5}{6}", pop, current.Value.rgb.ToHexString(),
-	                        current.Value.rgb.ToDecimalString(), current.Value.hsl.ToString(),  current.Value.hwb.ToString(), current.Value.xyz.ToString(),
-	                        string.IsNullOrWhiteSpace(current.Value.name) ? "" : string.Format("\t{0}", current.Value.name)));
-	                    pop = null;
+						print(pop, current.Value);
 	                }
 				}
 				catch(Exception e)
@@ -854,5 +1047,6 @@ class color
 				}
             }
         }
-    }
+	}
+#endif
 }

@@ -88,7 +88,7 @@
 	<Csc OutputAssembly="$(OutDir)\pbkdf2.exe" Sources="pbkdf2.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
   </Target>
   <Target Name="Colour" DependsOnTargets="MakeDirs">
-	<Csc OutputAssembly="$(OutDir)\colour.exe" Sources="colour.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
+	<Csc OutputAssembly="$(OutDir)\colour.exe" Sources="colour.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants);COLOUR_INCLUDE_MAIN" />
   </Target>
   <Target Name="GitUploadPack" DependsOnTargets="MakeDirs">
   	<Csc OutputAssembly="$(OutDir)\git-upload-pack.exe" Sources="gitwrap.cs;git_upload_pack.cs" TargetType="exe" EmitDebugInformation="$(EmitDebugInformation)" DefineConstants="$(DefineConstants)" />
