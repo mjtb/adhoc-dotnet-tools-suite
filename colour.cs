@@ -14,12 +14,7 @@ class color
 {
     struct Color
     {
-        private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
-            RGB = new Regex("rgb\\(\\s*(?<r>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<g>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
-            HSL = new Regex("hsl\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<s>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
-            HWB = new Regex("hwb\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<w>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
-            HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
-        private static readonly Color[] NAMED = new Color[]
+        public static readonly Color[] NAMED = new Color[]
         {
             new Color("aliceblue", 240,248,255),
             new Color("antiquewhite", 250,235,215),
@@ -169,7 +164,439 @@ class color
             new Color("yellow", 255,255,0),
             new Color("yellowgreen", 154,205,50)
         };
-        public readonly double r, g, b, h, s, l, w, k;
+
+		public struct RGB
+		{
+			private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
+	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<g>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
+				HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
+			public double r;
+			public double g;
+			public double b;
+			public RGB(int rgb)
+			{
+				r = ((rgb >> 16) & 0xFF) / 255.0;
+				g = ((rgb >> 8) & 0xFF) / 255.0;
+				b = (rgb & 0xFF) / 255.0;
+			}
+			public static bool TryParse(string s, out RGB rgb)
+			{
+				Match m = HEX6.Match(s);
+	            if (m.Success)
+	            {
+	                rgb = new RGB(int.Parse(m.Groups["r"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0, int.Parse(m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0, int.Parse(m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0);
+					return true;
+	            }
+                m = DEC.Match(s);
+                if (m.Success)
+                {
+                    rgb = new RGB(pn(m.Groups["r"].ToString()), pn(m.Groups["g"].ToString()), pn(m.Groups["b"].ToString()));
+					return true;
+                }
+				m = HEX3.Match(s);
+				if (m.Success)
+				{
+					rgb = new RGB(int.Parse(m.Groups["r"].ToString() + m.Groups["r"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0, int.Parse(m.Groups["g"].ToString() + m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0, int.Parse(m.Groups["b"].ToString() + m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0);
+					return true;
+				}
+				rgb = new RGB(double.NaN,double.NaN,double.NaN);
+				return false;
+			}
+			public RGB(double R, double G, double B)
+			{
+				r = R;
+				g = G;
+				b = B;
+			}
+			public string ToHexString()
+			{
+				return ToHexString(false);
+			}
+			public string ToHexString(bool three)
+			{
+				int h = GetHashCode();
+				if(three && (((h >> 20) & 0xF) == ((h >> 16) & 0xF)) && (((h >> 12) & 0xF) == ((h >> 8) & 0xF)) && (((h >> 4) & 0xF) == (h & 0xF)))
+				{
+					return string.Format(CultureInfo.InvariantCulture, "#{0:X3}", (((h >> 16) & 0xF) << 8) | (((h >> 8) & 0xF) << 4) | (h & 0xF));
+				}
+				else
+				{
+					return string.Format(CultureInfo.InvariantCulture, "#{0:X6}", h);
+				}
+			}
+
+			public string ToDecimalString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "rgb({0},{1},{2})", pi(r), pi(g), pi(b));
+			}
+
+			public override string ToString()
+			{
+				return ToHexString(false);
+			}
+
+			public override int GetHashCode()
+			{
+				return (pi(r) << 16) | (pi(g) << 8) | pi(b);
+			}
+
+			public override bool Equals(object o)
+			{
+				return (o is RGB) && (GetHashCode() == o.GetHashCode());
+			}
+		}
+
+		public struct HSL
+		{
+			private static readonly Regex RE = new Regex("hsl\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<s>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)");
+			public double h;
+			public double s;
+			public double l;
+			public HSL(double H, double S, double L)
+			{
+				h = H;
+				s = S;
+				l = L;
+			}
+			public static bool TryParse(string s, out HSL hsl)
+			{
+				Match m = RE.Match(s);
+				if (m.Success)
+				{
+					hsl = new HSL(double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0, pn(m.Groups["s"].ToString(), 100), pn(m.Groups["l"].ToString(), 100));
+					return true;
+				}
+				hsl = new HSL(double.NaN, double.NaN, double.NaN);
+				return false;
+			}
+			public HSL(RGB rgb)
+			{
+				double M = Math.Max(Math.Max(rgb.r, rgb.g), rgb.b);
+	            double m = Math.Min(Math.Min(rgb.r, rgb.g), rgb.b);
+	            double C = M - m;
+	            if (C == 0)
+	            {
+	                h = 0;
+	            }
+	            else if(M == rgb.r)
+	            {
+	                h = (rgb.g - rgb.b) / C;
+	            }
+	            else if(M == rgb.g)
+	            {
+	                h = (rgb.b - rgb.r) / C + 2;
+	            }
+	            else
+	            {
+	                h = (rgb.r - rgb.g) / C + 4;
+	            }
+	            h %= 6;
+	            while(h < 0)
+				{
+	                h += 6;
+	            }
+	            h /= 6;
+				if(h == 1)
+				{
+					h = 0;
+				}
+	            l = 0.5 * (M + m);
+	            if (l == 0 || l == 1)
+	            {
+	                s = 0;
+	            }
+	            else
+	            {
+	                s = C / (1 - Math.Abs(2 * l - 1));
+	            }
+			}
+			public override string ToString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "hsl({0},{1}%,{2}%)", pi(h, 360), pi(s, 100), pi(l, 100));
+			}
+			public override int GetHashCode()
+			{
+				return (pi(h, 360) << 16) | (pi(s, 100) << 8) | pi(l, 100);
+			}
+			public override bool Equals(object o)
+			{
+				return (o is HSL) && (GetHashCode() == o.GetHashCode());
+			}
+			private static double rho(double m1, double m2, double h)
+	        {
+	            if(h < 0)
+	            {
+	                h += 1;
+	            }
+	            if(h > 1)
+	            {
+	                h -= 1;
+	            }
+	            if(h*6 < 1)
+	            {
+	                return m1 + (m2 - m1) * h * 6;
+	            }
+	            else if(h*2<1)
+	            {
+	                return m2;
+	            }
+	            else if(h*3 < 2)
+	            {
+	                return m1 + (m2 - m1) * (2.0 / 3.0 - h) * 6;
+	            }
+	            else
+	            {
+	                return m1;
+	            }
+	        }
+
+			public RGB ToRGB()
+			{
+				double m2 = l <= 0.5 ? l * (s + 1) : (l + s - l * s);
+	            double m1 = l * 2 - m2;
+				return new RGB(rho(m1, m2, h + 1.0 / 3.0), rho(m1, m2, h), rho(m1, m2, h - 1.0 / 3.0));
+			}
+		}
+
+		public struct HWB
+		{
+			private static readonly Regex RE = new Regex("hwb\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<w>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)");
+			public double h;
+			public double w;
+			public double b;
+			public HWB(double H, double W, double B)
+			{
+				h = H;
+				w = W;
+				b = B;
+			}
+			public HWB(RGB rgb)
+			{
+				double M = Math.Max(Math.Max(rgb.r, rgb.g), rgb.b);
+	            double m = Math.Min(Math.Min(rgb.r, rgb.g), rgb.b);
+	            double C = M - m;
+	            if (C == 0)
+	            {
+	                h = 0;
+	            }
+	            else if(M == rgb.r)
+	            {
+	                h = (rgb.g - rgb.b) / C;
+	            }
+	            else if(M == rgb.g)
+	            {
+	                h = (rgb.b - rgb.r) / C + 2;
+	            }
+	            else
+	            {
+	                h = (rgb.r - rgb.g) / C + 4;
+	            }
+	            h %= 6;
+	            while(h < 0)
+	            {
+	                h += 6;
+	            }
+	            h /= 6;
+				if(h == 1)
+				{
+					h = 0;
+				}
+	            double V = M;
+	            double S = (C == 0) ? 0 : (C / V);
+	            w = (1 - S) * V;
+	            b = 1 - V;
+			}
+			public static bool TryParse(string s, out HWB hwb)
+			{
+				Match m = RE.Match(s);
+				if (m.Success)
+				{
+					hwb = new HWB(double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0, pn(m.Groups["w"].ToString(), 100), pn(m.Groups["b"].ToString(), 100));
+					return true;
+				}
+				hwb = new HWB(double.NaN, double.NaN, double.NaN);
+				return false;
+			}
+			public override string ToString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "hwb({0},{1}%,{2}%)", pi(h, 360), pi(w, 100), pi(b, 100));
+			}
+			public override int GetHashCode()
+			{
+				return (pi(h, 360) << 16) | (pi(w, 100) << 8) | pi(b, 100);
+			}
+			public override bool Equals(object o)
+			{
+				return (o is HWB) && (o.GetHashCode() == GetHashCode());
+			}
+			public RGB ToRGB()
+			{
+				double W = w;
+				double B = b;
+				double t = W + B;
+	            if(t > 1)
+	            {
+	                W /= t;
+	                B /= t;
+	            }
+	            t = 1 - W - B;
+				HSL hsl = new HSL(h, 1, 0.5);
+				RGB rgb = hsl.ToRGB();
+	            rgb.r *= t;
+	            rgb.r += W;
+	            rgb.g *= t;
+	            rgb.g += W;
+	            rgb.b *= t;
+	            rgb.b += W;
+				return rgb;
+			}
+		}
+
+		public struct XYZ
+		{
+			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<y>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<z>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
+			private static readonly double C = 1.0 / 0.17697;
+			private static readonly double[,] M = new double[3,3] {
+				{ 0.49000, 0.31000,  0.20000  },
+				{ 0.17697, 0.81240,  0.010630 },
+				{ 0.0000,  0.010000, 0.99000  }
+			};
+			private static readonly double[,] N = new double[3,3] {
+				{  0.41847,    -0.15866,  -0.082835 },
+				{ -0.091169,    0.25243,   0.015708 },
+				{  0.00092090, -0.0025498, 0.17860  }
+			};
+			public double x;
+			public double y;
+			public double z;
+
+			public XYZ(double X, double Y, double Z)
+			{
+				x = X;
+				y = Y;
+				z = Z;
+			}
+			private static double compandout(double v)
+			{
+				if(v <= 0.0031308)
+				{
+					return 12.92 * v;
+				}
+				else
+				{
+					return 1.055 * Math.Pow(v, 1 / 2.4) - 0.055;
+				}
+			}
+			private static double compandin(double V)
+			{
+				if(V <= 0.04045)
+				{
+					return V / 12.92;
+				}
+				else
+				{
+					return Math.Pow((V + 0.055) / 1.055, 2.4);
+				}
+			}
+			public XYZ(RGB srgb)
+			{
+				RGB rgb = new RGB(compandin(srgb.r), compandin(srgb.g), compandin(srgb.b));
+				x = C * (M[0,0] * rgb.r + M[0,1] * rgb.g + M[0,2] * rgb.b);
+				y = C * (M[1,0] * rgb.r + M[1,1] * rgb.g + M[1,2] * rgb.b);
+				z = C * (M[2,0] * rgb.r + M[2,1] * rgb.g + M[2,2] * rgb.b);
+			}
+			public static bool TryParse(string s, out XYZ xyz)
+			{
+				Match m = RE.Match(s);
+				if (m.Success)
+				{
+					xyz = new XYZ(pn(m.Groups["x"].ToString(), 1), pn(m.Groups["y"].ToString(), 1), pn(m.Groups["z"].ToString(), 1));
+					return true;
+				}
+				xyz = new XYZ(double.NaN, double.NaN, double.NaN);
+				return false;
+			}
+			public override int GetHashCode()
+			{
+				return (pi(x,1023) << 20) | (pi(y,1023) << 10) | pi(z,1023);
+			}
+			public override bool Equals(object o)
+			{
+				return (o is XYZ) && (o.GetHashCode() == GetHashCode());
+			}
+			public override string ToString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "xyz({0:0.000},{1:0.000},{2:0.000})", x, y, z);
+			}
+			public RGB ToRGB()
+			{
+				double r = N[0,0] * x + N[0,1] * y + N[0,1] * z;
+				double g = N[1,0] * x + N[1,1] * y + N[1,1] * z;
+				double b = N[2,0] * x + N[2,1] * y + N[2,1] * z;
+				return new RGB(compandout(r), compandout(g), compandout(b));
+			}
+		}
+		public struct LAB
+		{
+			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<a>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
+			public double l;
+			public double a;
+			public double b;
+			public LAB(double L, double A, double B)
+			{
+				l = L;
+				a = A;
+				b = B;
+			}
+			public static bool TryParse(string s, out LAB lab)
+			{
+				Match m = RE.Match(s);
+				if (m.Success)
+				{
+					lab = new LAB(pn(m.Groups["l"].ToString(), 1), pn(m.Groups["a"].ToString(), 1), pn(m.Groups["b"].ToString(), 1));
+					return true;
+				}
+				lab = new LAB(double.NaN, double.NaN, double.NaN);
+				return false;
+			}
+			public LAB(RGB rgb)
+			{
+				l = double.NaN;
+				a = double.NaN;
+				b = double.NaN;
+			}
+			public LAB(XYZ xyz)
+			{
+				l = double.NaN;
+				a = double.NaN;
+				b = double.NaN;
+			}
+			public override string ToString()
+			{
+				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.000} {1:0.000} {2:0.000})", l, a, b);
+			}
+			public override int GetHashCode()
+			{
+				return (pi(l, 100, 0, 1023) << 20) | (pi(a, 160, -160, 1023) << 10) | pi(b, 160, -160, 1023);
+			}
+			public override bool Equals(object o)
+			{
+				return (o is LAB) && (o.GetHashCode() == GetHashCode());
+			}
+			public RGB ToRGB()
+			{
+				return new RGB(double.NaN, double.NaN, double.NaN);
+			}
+			public XYZ ToXYZ()
+			{
+				return new XYZ(double.NaN, double.NaN, double.NaN);
+			}
+		}
+        public readonly RGB rgb;
+		public readonly HSL hsl;
+		public readonly HWB hwb;
+		public readonly LAB lab;
+		public readonly XYZ xyz;
         public readonly string name;
 
         private static double pn(string i, double q = 255.0)
@@ -184,178 +611,62 @@ class color
             }
         }
 
-        private static int pi(double d, int q = 255)
-        {
-            if (double.IsNaN(d))
+		private static int pi(double d, int q = 255)
+		{
+			return pi(d, 1, 0, q);
+		}
+		private static int pi(double d, double m, double n, int q)
+		{
+			if (double.IsNaN(d))
             {
-                d = 0;
+				return 0;
             }
             else if (double.IsInfinity(d))
             {
-                d = 1;
+				if(d > 0)
+				{
+					d = m;
+				}
+				else
+				{
+					d = n;
+				}
             }
-            return Math.Max(0, Math.Min(q, (int)Math.Round(Math.Abs(d) * q)));
-        }
+			return Math.Max(0, Math.Min(q, (int)Math.Round((d - n) / (m - n) * q)));
+		}
 
-        private static void hsl(double r, double g, double b, out double h, out double s, out double l)
+		private Color(string name_, int r, int g, int b)
         {
-            double M = Math.Max(Math.Max(r, g), b);
-            double m = Math.Min(Math.Min(r, g), b);
-            double C = M - m;
-            if (C == 0)
-            {
-                h = 0;
-            }
-            else if(M == r)
-            {
-                h = (g - b) / C;
-            }
-            else if(M == g)
-            {
-                h = (b - r) / C + 2;
-            }
-            else
-            {
-                h = (r - g) / C + 4;
-            }
-            h %= 6;
-            while(h < 0) {
-                h += 6;
-            }
-            h /= 6;
-            l = 0.5 * (M + m);
-            if (l == 0 || l == 1)
-            {
-                s = 0;
-            }
-            else
-            {
-                s = C / (1 - Math.Abs(2 * l - 1));
-            }
-        }
-
-        private static void hwb(double r, double g, double b, out double h, out double w, out double k)
-        {
-            double M = Math.Max(Math.Max(r, g), b);
-            double m = Math.Min(Math.Min(r, g), b);
-            double C = M - m;
-            if (C == 0)
-            {
-                h = 0;
-            }
-            else if(M == r)
-            {
-                h = (g - b) / C;
-            }
-            else if(M == g)
-            {
-                h = (b - r) / C + 2;
-            }
-            else
-            {
-                h = (r - g) / C + 4;
-            }
-            h %= 6;
-            while(h < 0)
-            {
-                h += 6;
-            }
-            h /= 6;
-            double V = M;
-            double S = (C == 0) ? 0 : (C / V);
-            w = (1 - S) * V;
-            k = 1 - V;
-        }
-
-        private static void hwb_to_rgb(double h, double w, double k, out double r, out double g, out double b)
-        {
-            double t = w + k;
-            if(t > 1)
-            {
-                w /= t;
-                k /= t;
-            }
-            t = 1 - w - k;
-            rgb(h, 1, 0.5, out r, out g, out b);
-            r *= t;
-            r += w;
-            g *= t;
-            g += w;
-            b *= t;
-            b += w;
-        }
-
-        private static double rgb(double m1, double m2, double h)
-        {
-            if(h < 0)
-            {
-                h += 1;
-            }
-            if(h > 1)
-            {
-                h -= 1;
-            }
-            if(h*6 < 1)
-            {
-                return m1 + (m2 - m1) * h * 6;
-            }
-            else if(h*2<1)
-            {
-                return m2;
-            }
-            else if(h*3 < 2)
-            {
-                return m1 + (m2 - m1) * (2.0 / 3.0 - h) * 6;
-            }
-            else
-            {
-                return m1;
-            }
-        }
-
-        private static void rgb(double h, double s, double l, out double r, out double g, out double b)
-        {
-            double m2 = l <= 0.5 ? l * (s + 1) : (l + s - l * s);
-            double m1 = l * 2 - m2;
-            r = rgb(m1, m2, h + 1.0 / 3.0);
-            g = rgb(m1, m2, h);
-            b = rgb(m1, m2, h - 1.0 / 3.0);
-        }
-
-        private Color(string name_, int r__, int g__, int b__)
-        {
-            double r_ = r__ / 255.0, g_ = g__ / 255.0, b_ = b__ / 255.0, t_ = double.NaN;
+            rgb = new RGB(r / 255.0, g / 255.0, b / 255.0);
+			hsl = new HSL(rgb);
+			hwb = new HWB(rgb);
+			lab = new LAB(rgb);
+			xyz = new XYZ(rgb);
             if (string.IsNullOrWhiteSpace(name_))
             {
                 foreach (Color c in NAMED)
                 {
-                    if (c.Equals(r_, g_, b_))
+                    if (c.rgb.Equals(rgb))
                     {
                         name_ = c.name;
                         break;
                     }
                 }
             }
-            this.name = name_;
-            this.r = r_;
-            this.g = g_;
-            this.b = b_;
-            hsl(r_, g_, b_, out this.h, out this.s, out this.l);
-            hwb(r_, g_, b_, out t_, out this.w, out this.k);
+            name = name_;
         }
 
         public override int GetHashCode()
         {
-            return pi(r) | (pi(g) << 8) | (pi(b) << 16);
+			return rgb.GetHashCode();
         }
-
 
         public override bool Equals(object obj)
         {
-            if (obj is color)
+            if (obj is Color)
             {
                 Color x = (Color)obj;
-                return Equals(x.r, x.g, x.b);
+                return rgb.Equals(x.rgb);
             }
             else
             {
@@ -363,130 +674,76 @@ class color
             }
         }
 
-        private bool Equals(double xr, double xg, double xb)
-        {
-            return (pi(xr) == pi(this.r))
-                && (pi(xg) == pi(this.g))
-                && (pi(xb) == pi(this.b));
-        }
-
         public Color(string input)
         {
-            double r_ = double.NaN, g_ = double.NaN, b_ = double.NaN, h_ = double.NaN, s_ = double.NaN, l_ = double.NaN, w_ = double.NaN, k_ = double.NaN, t_ = double.NaN;
-            string name_ = null;
-            Match m = HEX6.Match(input);
-            if (m.Success)
-            {
-                r_ = int.Parse(m.Groups["r"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                g_ = int.Parse(m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                b_ = int.Parse(m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                hsl(r_, g_, b_, out h_, out s_, out l_);
-                hwb(r_, g_, b_, out t_, out w_, out k_);
-            }
-            else
-            {
-                m = RGB.Match(input);
-                if (m.Success)
-                {
-                    r_ = pn(m.Groups["r"].ToString());
-                    g_ = pn(m.Groups["g"].ToString());
-                    b_ = pn(m.Groups["b"].ToString());
-                    hsl(r_, g_, b_, out h_, out s_, out l_);
-                    hwb(r_, g_, b_, out t_, out w_, out k_);
-                }
-                else
-                {
-                    m = HSL.Match(input);
-                    if (m.Success)
-                    {
-                        h_ = double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0;
-                        s_ = double.Parse(m.Groups["s"].ToString().TrimEnd('%')) / 100.0;
-                        l_ = double.Parse(m.Groups["l"].ToString().TrimEnd('%')) / 100.0;
-                        rgb(h_, s_, l_, out r_, out g_, out b_);
-                        hwb(r_, g_, b_, out t_, out w_, out k_);
-                    }
-                    else
-                    {
-                        m = HEX3.Match(input);
-                        if (m.Success)
-                        {
-                            r_ = int.Parse(m.Groups["r"].ToString() + m.Groups["r"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                            g_ = int.Parse(m.Groups["g"].ToString() + m.Groups["g"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                            b_ = int.Parse(m.Groups["b"].ToString() + m.Groups["b"].ToString(), NumberStyles.AllowHexSpecifier) / 255.0;
-                            hsl(r_, g_, b_, out h_, out s_, out l_);
-                            hwb(r_, g_, b_, out t_, out w_, out k_);
-                        }
-                        else
-                        {
-                            m = HWB.Match(input);
-                            if (m.Success)
-                            {
-                                h_ = double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0;
-                                w_ = double.Parse(m.Groups["w"].ToString().TrimEnd('%')) / 100.0;
-                                k_ = double.Parse(m.Groups["b"].ToString().TrimEnd('%')) / 100.0;
-                                hwb_to_rgb(h_, w_, k_, out r_, out g_, out b_);
-                                hsl(r_, g_, b_, out t_, out s_, out l_);
-                            }
-                            else
-                            {
-                                foreach (Color c in NAMED)
-                                {
-                                    if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
-                                    {
-                                        r_ = c.r;
-                                        g_ = c.g;
-                                        b_ = c.b;
-                                        h_ = c.h;
-                                        s_ = c.s;
-                                        l_ = c.l;
-                                        w_ = c.w;
-                                        k_ = c.k;
-                                        name_ = c.name;
-                                        break;
-                                    }
-                                }
-                                if (string.IsNullOrWhiteSpace(name_))
-                                {
-                                    throw new ArgumentException(string.Format("Not a valid color: \"{0}\"", input));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+			string name_ = null;
+			if(RGB.TryParse(input, out rgb))
+			{
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
+				lab = new LAB(rgb);
+				xyz = new XYZ(rgb);
+			}
+			else if(HSL.TryParse(input, out hsl))
+			{
+				rgb = hsl.ToRGB();
+				hwb = new HWB(rgb);
+				lab = new LAB(rgb);
+				xyz = new XYZ(rgb);
+			}
+			else if(HWB.TryParse(input, out hwb))
+			{
+				rgb = hwb.ToRGB();
+				hsl = new HSL(rgb);
+				lab = new LAB(rgb);
+				xyz = new XYZ(rgb);
+			}
+			else if(LAB.TryParse(input, out lab))
+			{
+				rgb = lab.ToRGB();
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
+				xyz = new XYZ(rgb);
+			}
+			else if(XYZ.TryParse(input, out xyz))
+			{
+				rgb = xyz.ToRGB();
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
+				lab = new LAB(xyz);
+			}
+			else
+			{
+				foreach (Color c in NAMED)
+				{
+					if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
+					{
+						rgb = c.rgb;
+						hsl = c.hsl;
+						hwb = c.hwb;
+						lab = c.lab;
+						xyz = c.xyz;
+						name_ = c.name;
+						break;
+					}
+				}
+				if (string.IsNullOrWhiteSpace(name_))
+				{
+					throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid color: \"{0}\"", input));
+				}
+			}
             if (string.IsNullOrWhiteSpace(name_))
             {
                 foreach (Color c in NAMED)
                 {
-                    if (c.Equals(r_, g_, b_))
+                    if (c.rgb.Equals(rgb))
                     {
                         name_ = c.name;
                         break;
                     }
                 }
             }
-            this.r = r_;
-            this.g = g_;
-            this.b = b_;
-            if(h_ == 1)
-            {
-                h_ = 0;
-            }
-            this.h = h_;
-            this.s = s_;
-            this.l = l_;
-            this.w = w_;
-            this.k = k_;
-            this.name = name_;
-        }
-
-        public enum StringFormat
-        {
-            NAME,
-            HEX,
-            RGB,
-            HSL,
-            HWB
+			name = name_;
         }
 
         public override string ToString()
@@ -497,42 +754,24 @@ class color
             }
             else
             {
-                return ToString(StringFormat.HEX);
-            }
-        }
-        public string ToString(StringFormat format)
-        {
-            switch(format)
-            {
-                default:
-                    throw new ArgumentException("Invalid color string format");
-                case StringFormat.NAME:
-                    return name;
-                case StringFormat.HEX:
-                    return string.Format("#{0:X2}{1:X2}{2:X2}", pi(r), pi(g), pi(b));
-                case StringFormat.RGB:
-                    return string.Format("rgb({0},{1},{2})", pi(r), pi(g), pi(b));
-                case StringFormat.HSL:
-                    return string.Format("hsl({0},{1}%,{2}%)", pi(h, 360), pi(s, 100), pi(l, 100));
-                case StringFormat.HWB:
-                    return string.Format("hwb({0},{1}%,{2}%)", pi(h, 360), pi(w, 100), pi(k, 100));
+                return rgb.ToString();
             }
         }
 
         public static Color operator+(Color a, Color b)
         {
-            return new Color(null, pi(a.r + b.r), pi(a.g + b.g), pi(a.b + b.b));
+            return new Color(null, pi(a.rgb.r + b.rgb.r), pi(a.rgb.g + b.rgb.g), pi(a.rgb.b + b.rgb.b));
         }
 
         public static Color operator*(Color a, Color b)
         {
-            return new Color(null, pi(a.r * b.r), pi(a.g * b.g), pi(a.b * b.b));
+            return new Color(null, pi(a.rgb.r * b.rgb.r), pi(a.rgb.g * b.rgb.g), pi(a.rgb.b * b.rgb.b));
         }
 
         public static Color interpolate(Color a, Color b, double q)
         {
             double qq = 1 - q;
-            return new Color(null, pi(qq * a.r + q * b.r), pi(qq * a.g + q * b.g), pi(qq * a.b + q * b.b));
+            return new Color(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
         }
     }
 
@@ -576,8 +815,8 @@ class color
 				try
 				{
 	                Color c = new Color(a);
-	                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", a, c.ToString(Color.StringFormat.HEX),
-	                    c.ToString(Color.StringFormat.RGB), c.ToString(Color.StringFormat.HSL), c.ToString(Color.StringFormat.HWB),
+	                Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}\t{5}{6}", a, c.rgb.ToHexString(),
+	                    c.rgb.ToDecimalString(), c.hsl.ToString(), c.hwb.ToString(), c.xyz.ToString(),
 	                    string.IsNullOrWhiteSpace(c.name) ? "" : string.Format("\t{0}", c.name)));
 	                bool pc = true;
 	                if (op == '+')
@@ -603,8 +842,8 @@ class color
 	                }
 	                if (pc)
 	                {
-	                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}{5}", pop, current.Value.ToString(Color.StringFormat.HEX),
-	                        current.Value.ToString(Color.StringFormat.RGB), current.Value.ToString(Color.StringFormat.HSL),  current.Value.ToString(Color.StringFormat.HWB),
+	                    Console.WriteLine(string.Format("{0}:\t{1}\t{2}\t{3}\t{4}\t{5}{6}", pop, current.Value.rgb.ToHexString(),
+	                        current.Value.rgb.ToDecimalString(), current.Value.hsl.ToString(),  current.Value.hwb.ToString(), current.Value.xyz.ToString(),
 	                        string.IsNullOrWhiteSpace(current.Value.name) ? "" : string.Format("\t{0}", current.Value.name)));
 	                    pop = null;
 	                }
