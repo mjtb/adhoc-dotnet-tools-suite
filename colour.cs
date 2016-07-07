@@ -870,9 +870,10 @@ using System.Reflection;
 			}
 			else
 			{
+				string mre = input?.Replace("gray", "grey");
 				foreach (Colour c in Standard)
 				{
-					if (StringComparer.InvariantCultureIgnoreCase.Compare(input, c.name) == 0)
+					if ((StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.name) == 0) || (StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.keyword) == 0))
 					{
 						rgb = c.rgb;
 						hsl = c.hsl;
