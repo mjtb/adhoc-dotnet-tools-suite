@@ -266,6 +266,11 @@ using System.Reflection;
 			{
 				return (o is RGB) && (GetHashCode() == o.GetHashCode());
 			}
+
+			public static double operator-(RGB a, RGB b)
+			{
+				return Math.Sqrt(Math.Pow(a.r - b.r, 2) + Math.Pow(a.g - b.g, 2) + Math.Pow(a.b - b.b, 2));
+			}
 		}
 
 		public struct HSL
@@ -378,6 +383,15 @@ using System.Reflection;
 	            double m1 = l * 2 - m2;
 				return new RGB(rho(m1, m2, h + 1.0 / 3.0), rho(m1, m2, h), rho(m1, m2, h - 1.0 / 3.0));
 			}
+
+			public static double operator-(HSL a, HSL b)
+			{
+				double ax = a.s * Math.Cos(a.h * Math.PI / 180.0);
+				double ay = a.s * Math.Sin(a.h * Math.PI / 180.0);
+				double bx = b.s * Math.Cos(b.h * Math.PI / 180.0);
+				double by = b.s * Math.Sin(b.h * Math.PI / 180.0);
+				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
+			}
 		}
 
 		public struct HWB
@@ -472,6 +486,15 @@ using System.Reflection;
 	            rgb.b += W;
 				return rgb;
 			}
+
+			public static double operator-(HWB a, HWB b)
+			{
+				double ax = a.b * Math.Cos(a.h * Math.PI / 180.0);
+				double ay = a.b * Math.Sin(a.h * Math.PI / 180.0);
+				double bx = b.b * Math.Cos(b.h * Math.PI / 180.0);
+				double by = b.b * Math.Sin(b.h * Math.PI / 180.0);
+				return Math.Sqrt(Math.Pow(a.w - b.w, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
+			}
 		}
 
 		public struct XYZ
@@ -559,6 +582,10 @@ using System.Reflection;
 				d65.y = D65[1,0] * x + D65[1,1] * y + D65[1,2] * z;
 				d65.z = D65[2,0] * x + D65[2,1] * y + D65[2,2] * z;
 				return d65;
+			}
+			public static double operator-(XYZ a, XYZ b)
+			{
+				return Math.Sqrt(Math.Pow(a.x - b.x, 2) + Math.Pow(a.y - b.y, 2) + Math.Pow(a.z - b.z, 2));
 			}
 		}
 		public struct LAB
@@ -649,6 +676,10 @@ using System.Reflection;
 				d50.z = labout(f.z) * 0.8249;
 				return d50.ToD65();
 			}
+			public static double operator-(LAB a, LAB b)
+			{
+				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(a.a - b.a, 2) + Math.Pow(a.b - b.b, 2));
+			}
 		}
 
 		public struct LCH
@@ -710,6 +741,14 @@ using System.Reflection;
 			public RGB ToRGB()
 			{
 				return ToLAB().ToRGB();
+			}
+			public static double operator-(LCH a, LCH b)
+			{
+				double ax = a.c * Math.Cos(a.h * Math.PI / 180.0);
+				double ay = a.c * Math.Sin(a.h * Math.PI / 180.0);
+				double bx = b.c * Math.Cos(b.h * Math.PI / 180.0);
+				double by = b.c * Math.Sin(b.h * Math.PI / 180.0);
+				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
 			}
 		}
 
@@ -932,6 +971,89 @@ using System.Reflection;
             return new Colour(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
         }
 
+		public Colour Approximate()
+		{
+			return Approximate(lch);
+		}
+		public Colour Approximate(object field)
+		{
+			double D = double.PositiveInfinity;
+			int I = 0;
+			if(field is LCH)
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = lch - Standard[i].lch;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else if(field is HWB)
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = hwb - Standard[i].hwb;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else if(field is HSL)
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = hsl - Standard[i].hsl;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else if(field is LAB)
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = lab - Standard[i].lab;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else if(field is XYZ)
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = xyz - Standard[i].xyz;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else
+			{
+				for(int i = 0; i < Standard.Length; ++i)
+				{
+					double d = rgb - Standard[i].rgb;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			return Standard[I];
+		}
+
 #if COLOUR_INCLUDE_MAIN
 	static string format(Colour c, string TAB = "\t", string NL = "")
 	{
@@ -967,6 +1089,17 @@ using System.Reflection;
 			buf.Append(NL);
 			buf.Append(TAB);
 			buf.Append(c.keyword);
+		}
+		else
+		{
+			buf.Append(NL);
+			buf.Append(TAB);
+			buf.Append("Nearest standard colour: ");
+			Colour a = c.Approximate();
+			buf.Append(a.rgb.ToString());
+			buf.Append(" (");
+			buf.Append(a.keyword);
+			buf.Append(')');
 		}
 		return buf.ToString();
 	}
