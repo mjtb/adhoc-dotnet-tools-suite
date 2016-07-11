@@ -275,7 +275,8 @@ using System.Reflection;
 			{
 				get
 				{
-					return r >=0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1;
+					const double M = -0.5/255.0, N = 255.5/255.0;
+					return r >= M && r <= N && g >= M && g <= N && b >= M && b <= N;
 				}
 			}
 			public RGB Clip()
@@ -284,73 +285,53 @@ using System.Reflection;
 				{
 					return this;
 				}
-				const int CMIN = 0;
-				const int CMAX = 230;
-				const int LMIN = 0;
-				const int LMAX = 100;
-				int cstart, cstop, cstep, lstart, lstop, lstep;
-				LCH orig = new LCH(this);
-				LCH clip = orig;
-				RGB cr = new RGB();
-				if(orig.c < ((CMAX - CMIN) / 2))
+				LCH origch = new LCH(this);
+				LAB origab = origch.ToLAB();
+				for(int g = 0; g <= 20; ++g)
 				{
-					cstart = (int)Math.Floor(orig.c);
-					cstop = CMAX;
-					cstep = 1;
-				}
-				else
-				{
-					cstart = (int)Math.Ceiling(orig.c);
-					cstop = CMIN;
-					cstep = -1;
-				}
-				if(orig.l < ((LMAX - LMIN) / 2))
-				{
-					lstart = (int)Math.Floor(orig.l);
-					lstop = LMAX;
-					lstep = 1;
-				}
-				else
-				{
-					lstart = (int)Math.Ceiling(orig.l);
-					lstop = LMIN;
-					lstep = -1;
-				}
-				for(int c = cstart, l = lstart, i = 0; c != cstop && l != lstop; ++i)
-				{
-					clip.l = l;
-					clip.c = c;
-					cr = clip.ToRGB();
-					if(cr.IsValid)
+					int K = g <= 3 ? 5 : (g <= 5 ? 8 : (g <= 8 ? 13 : (g <= 13 ? 21 : 34)));
+					LCH Q = origch;
+					RGB R = this;
+					double D = double.PositiveInfinity;
+					bool B = false;
+					for(int k = 0; k <= K; ++k)
 					{
-						break;
+						for(int u = 0; u <= k; ++u)
+						{
+							for(int v = 0; v <= k; ++v)
+							{
+								for(int x = 0; x <= 7; ++x)
+								{
+									LCH q = new LCH();
+									q.c = origch.c + v * ((x & 1) == 0 ? 1 : -1);
+									q.l = origch.l + u * (((x >> 1) & 1) == 0 ? 1 : -1);
+									q.h = origch.h + g * (((x >> 2) & 1) == 0 ? 1 : -1);
+									RGB rx = q.ToRGB();
+									if(rx.IsValid)
+									{
+										double d = origab - q.ToLAB();
+										if(d < D)
+										{
+											B = true;
+											D = d;
+											Q = q;
+											R = rx;
+										}
+									}
+								}
+							}
+						}
 					}
-					switch(i % 3)
+					if(B)
 					{
-					case 0:
-						c = Math.Max(CMIN, Math.Min(CMAX, c + cstep));
-						break;
-					case 1:
-						c = Math.Max(CMIN, Math.Min(CMAX, c - cstep));
-						l = Math.Max(LMIN, Math.Min(LMAX, l + lstep));
-						break;
-					case 2:
-						c = Math.Max(CMIN, Math.Min(CMAX, c + cstep));
-						break;
+						return R;
 					}
 				}
-				if(cr.IsValid)
-				{
-					return cr;
-				}
-				else
-				{
-					RGB rv = new RGB();
-					rv.r = Math.Min(1, Math.Max(0, r));
-					rv.g = Math.Min(1, Math.Max(0, g));
-					rv.b = Math.Min(1, Math.Max(0, b));
-					return rv;
-				}
+				RGB rv = new RGB();
+				rv.r = Math.Min(1, Math.Max(0, r));
+				rv.g = Math.Min(1, Math.Max(0, g));
+				rv.b = Math.Min(1, Math.Max(0, b));
+				return rv;
 			}
 		}
 
@@ -1181,6 +1162,14 @@ using System.Reflection;
 			buf.Append(" (");
 			buf.Append(a.keyword);
 			buf.Append(')');
+		}
+		if(!c.rgb.IsValid)
+		{
+			buf.Append(NL);
+			buf.Append(TAB);
+			buf.Append("Nearest sRGB colour: ");
+			RGB q = c.rgb.Clip();
+			buf.Append(q.ToString());
 		}
 		return buf.ToString();
 	}
