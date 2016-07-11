@@ -271,6 +271,103 @@ using System.Reflection;
 			{
 				return Math.Sqrt(Math.Pow(a.r - b.r, 2) + Math.Pow(a.g - b.g, 2) + Math.Pow(a.b - b.b, 2));
 			}
+			public bool IsValid
+			{
+				get
+				{
+					return r >=0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1;
+				}
+			}
+			public RGB Clip()
+			{
+				if(IsValid)
+				{
+					return this;
+				}
+				const int CMIN = 0;
+				const int CMAX = 230;
+				const int LMIN = 0;
+				const int LMAX = 100;
+				int cstart, cstop, cstep, lstart, lstop, lstep;
+				LCH orig = new LCH(this);
+				LCH chroma = orig, luma = orig;
+				RGB cr = new RGB(), lr = new RGB();
+				if(orig.c < ((CMAX - CMIN) / 2))
+				{
+					cstart = (int)Math.Floor(orig.c);
+					cstop = CMAX;
+					cstep = 1;
+				}
+				else
+				{
+					cstart = (int)Math.Ceiling(orig.c);
+					cstop = CMIN;
+					cstep = -1;
+				}
+				if(orig.l < ((LMAX - LMIN) / 2))
+				{
+					lstart = (int)Math.Floor(orig.l);
+					lstop = LMAX;
+					lstep = 1;
+				}
+				else
+				{
+					lstart = (int)Math.Ceiling(orig.l);
+					lstop = LMIN;
+					lstep = -1;
+				}
+				for(int c = cstart; c != cstop; c += cstep)
+				{
+					chroma.c = c;
+					cr = chroma.ToRGB();
+					if(cr.IsValid)
+					{
+						break;
+					}
+				}
+				for(int l = lstart; l != lstop; l += lstep)
+				{
+					luma.l = l;
+					lr = luma.ToRGB();
+					if(lr.IsValid)
+					{
+						break;
+					}
+				}
+				if(cr.IsValid)
+				{
+					if(lr.IsValid)
+					{
+						LAB cg = new LAB(cr), lg = new LAB(lr), og = orig.ToLAB();
+						double dc = Math.Sqrt(Math.Pow(cg.l - og.l, 2) + Math.Pow(cg.a - og.a, 2) + Math.Pow(cg.b - og.b, 2));
+						double dl = Math.Sqrt(Math.Pow(lg.l - og.l, 2) + Math.Pow(lg.a - og.a, 2) + Math.Pow(lg.b - og.b, 2));
+						if(dc > dl)
+						{
+							return lr;
+						}
+						else
+						{
+							return cr;
+						}
+					}
+					else
+					{
+						return cr;
+					}
+				}
+				else if(lr.IsValid)
+				{
+					return lr;
+				}
+				else
+				{
+					RGB rv = new RGB();
+					rv.r = Math.Min(1, Math.Max(0, r));
+					rv.g = Math.Min(1, Math.Max(0, g));
+					rv.b = Math.Min(1, Math.Max(0, b));
+					return rv;
+				}
+			}
 		}
 
 		public struct HSL
@@ -886,24 +983,45 @@ using System.Reflection;
 			else if(XYZ.TryParse(input, out xyz))
 			{
 				rgb = xyz.ToRGB();
-				hsl = new HSL(rgb);
-				hwb = new HWB(rgb);
+				if(!rgb.IsValid)
+				{
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+				}
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
+				hsl = new HSL(rgb);
+				hwb = new HWB(rgb);
 			}
 			else if(LAB.TryParse(input, out lab))
 			{
+				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
+				if(!rgb.IsValid)
+				{
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
-				lch = new LCH(lab);
 			}
 			else if(LCH.TryParse(input, out lch))
 			{
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
+				if(!rgb.IsValid)
+				{
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 			}
@@ -965,7 +1083,7 @@ using System.Reflection;
             return new Colour(null, pi(a.rgb.r * b.rgb.r), pi(a.rgb.g * b.rgb.g), pi(a.rgb.b * b.rgb.b));
         }
 
-        public static Colour interpolate(Colour a, Colour b, double q)
+        public static Colour Interpolate(Colour a, Colour b, double q)
         {
             double qq = 1 - q;
             return new Colour(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
@@ -1161,7 +1279,7 @@ using System.Reflection;
 	                }
 	                else if (op == '~')
 	                {
-	                    current = Colour.interpolate(current.Value, c, q);
+	                    current = Colour.Interpolate(current.Value, c, q);
 	                    q = double.NaN;
 	                    op = '\0';
 	                }
