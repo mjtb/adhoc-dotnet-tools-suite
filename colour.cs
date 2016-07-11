@@ -290,8 +290,8 @@ using System.Reflection;
 				const int LMAX = 100;
 				int cstart, cstop, cstep, lstart, lstop, lstep;
 				LCH orig = new LCH(this);
-				LCH chroma = orig, luma = orig;
-				RGB cr = new RGB(), lr = new RGB();
+				LCH clip = orig;
+				RGB cr = new RGB();
 				if(orig.c < ((CMAX - CMIN) / 2))
 				{
 					cstart = (int)Math.Floor(orig.c);
@@ -316,48 +316,32 @@ using System.Reflection;
 					lstop = LMIN;
 					lstep = -1;
 				}
-				for(int c = cstart; c != cstop; c += cstep)
+				for(int c = cstart, l = lstart, i = 0; c != cstop && l != lstop; ++i)
 				{
-					chroma.c = c;
-					cr = chroma.ToRGB();
+					clip.l = l;
+					clip.c = c;
+					cr = clip.ToRGB();
 					if(cr.IsValid)
 					{
 						break;
 					}
-				}
-				for(int l = lstart; l != lstop; l += lstep)
-				{
-					luma.l = l;
-					lr = luma.ToRGB();
-					if(lr.IsValid)
+					switch(i % 3)
 					{
+					case 0:
+						c = Math.Max(CMIN, Math.Min(CMAX, c + cstep));
+						break;
+					case 1:
+						c = Math.Max(CMIN, Math.Min(CMAX, c - cstep));
+						l = Math.Max(LMIN, Math.Min(LMAX, l + lstep));
+						break;
+					case 2:
+						c = Math.Max(CMIN, Math.Min(CMAX, c + cstep));
 						break;
 					}
 				}
 				if(cr.IsValid)
 				{
-					if(lr.IsValid)
-					{
-						LAB cg = new LAB(cr), lg = new LAB(lr), og = orig.ToLAB();
-						double dc = Math.Sqrt(Math.Pow(cg.l - og.l, 2) + Math.Pow(cg.a - og.a, 2) + Math.Pow(cg.b - og.b, 2));
-						double dl = Math.Sqrt(Math.Pow(lg.l - og.l, 2) + Math.Pow(lg.a - og.a, 2) + Math.Pow(lg.b - og.b, 2));
-						if(dc > dl)
-						{
-							return lr;
-						}
-						else
-						{
-							return cr;
-						}
-					}
-					else
-					{
-						return cr;
-					}
-				}
-				else if(lr.IsValid)
-				{
-					return lr;
+					return cr;
 				}
 				else
 				{
@@ -644,7 +628,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "xyz({0:0.000},{1:0.000},{2:0.000})", x, y, z);
+				return string.Format(CultureInfo.InvariantCulture, "xyz({0:0.000000},{1:0.000000},{2:0.000000})", x, y, z);
 			}
 			public RGB ToRGB()
 			{
@@ -735,7 +719,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.000} {1:0.000} {2:0.000})", l, a, b);
+				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.000000} {1:0.000000} {2:0.000000})", l, a, b);
 			}
 			public override int GetHashCode()
 			{
@@ -828,7 +812,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.000} {1:0.000} {2:0.000})", l, c, h);
+				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.000000} {1:0.000000} {2:0.000000})", l, c, h);
 			}
 			public LAB ToLAB()
 			{
@@ -983,13 +967,6 @@ using System.Reflection;
 			else if(XYZ.TryParse(input, out xyz))
 			{
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
-				{
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-					lab = new LAB(xyz);
-					lch = new LCH(lab);
-				}
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				hsl = new HSL(rgb);
@@ -1000,13 +977,6 @@ using System.Reflection;
 				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
-				{
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-					lab = new LAB(xyz);
-					lch = new LCH(lab);
-				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 			}
@@ -1015,13 +985,6 @@ using System.Reflection;
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
-				{
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-					lab = new LAB(xyz);
-					lch = new LCH(lab);
-				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 			}
