@@ -821,6 +821,7 @@ using System.Reflection;
 		public readonly LAB lab;
 		public readonly LCH lch;
         public readonly string name;
+		public readonly object clipped;
 		public string keyword
 		{
 			get
@@ -881,23 +882,21 @@ using System.Reflection;
 		private Colour(string name_, int r, int g, int b)
         {
             rgb = new RGB(r / 255.0, g / 255.0, b / 255.0);
+			if(!rgb.IsValid)
+			{
+				clipped = rgb;
+				rgb = rgb.Clip();
+			}
+			else
+			{
+				clipped = false;
+			}
 			hsl = new HSL(rgb);
 			hwb = new HWB(rgb);
 			xyz = new XYZ(rgb);
 			lab = new LAB(xyz);
 			lch = new LCH(lab);
-            if (string.IsNullOrWhiteSpace(name_))
-            {
-                foreach (Colour c in Standard)
-                {
-                    if (c.rgb.Equals(rgb))
-                    {
-                        name_ = c.name;
-                        break;
-                    }
-                }
-            }
-            name = name_;
+			name = name_ ?? Find(rgb);
         }
 
         public override int GetHashCode()
@@ -920,54 +919,122 @@ using System.Reflection;
 
         public Colour(string input)
         {
-			string name_ = null;
 			if(RGB.TryParse(input, out rgb))
 			{
+				if(!rgb.IsValid)
+				{
+					clipped = rgb;
+					rgb = rgb.Clip();
+				}
+				else
+				{
+					clipped = null;
+				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
+				name = Find(rgb);
 			}
 			else if(HSL.TryParse(input, out hsl))
 			{
 				rgb = hsl.ToRGB();
+				if(!rgb.IsValid)
+				{
+					clipped = hsl;
+					rgb = rgb.Clip();
+					hsl = new HSL(rgb);
+				}
+				else
+				{
+					clipped = null;
+				}
 				hwb = new HWB(rgb);
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
+				name = Find(rgb);
 			}
 			else if(HWB.TryParse(input, out hwb))
 			{
 				rgb = hwb.ToRGB();
+				if(!rgb.IsValid)
+				{
+					clipped = hwb;
+					rgb = rgb.Clip();
+					hwb = new HWB(rgb);
+				}
+				else
+				{
+					clipped = null;
+				}
 				hsl = new HSL(rgb);
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
+				name = Find(rgb);
 			}
 			else if(XYZ.TryParse(input, out xyz))
 			{
 				rgb = xyz.ToRGB();
+				if(!rgb.IsValid)
+				{
+					clipped = xyz;
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+				}
+				else
+				{
+					clipped = null;
+				}
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
+				name = Find(rgb);
 			}
 			else if(LAB.TryParse(input, out lab))
 			{
 				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
+				if(!rgb.IsValid)
+				{
+					clipped = lab;
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+				}
+				else
+				{
+					clipped = null;
+				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
+				name = Find(rgb);
 			}
 			else if(LCH.TryParse(input, out lch))
 			{
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
+				if(!rgb.IsValid)
+				{
+					clipped = lch;
+					rgb = rgb.Clip();
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+				}
+				else
+				{
+					clipped = null;
+				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
+				name = Find(rgb);
 			}
 			else
 			{
@@ -982,28 +1049,26 @@ using System.Reflection;
 						xyz = c.xyz;
 						lab = c.lab;
 						lch = c.lch;
-						name_ = c.name;
-						break;
+						clipped = c.clipped;
+						name = c.name;
+						return;
 					}
 				}
-				if (string.IsNullOrWhiteSpace(name_))
+				throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid colour: \"{0}\"", input));
+			}
+        }
+
+		private static string Find(RGB rgb)
+		{
+			foreach (Colour c in Standard)
+			{
+				if (c.rgb.Equals(rgb))
 				{
-					throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid colour: \"{0}\"", input));
+					return c.name;
 				}
 			}
-            if (string.IsNullOrWhiteSpace(name_))
-            {
-                foreach (Colour c in Standard)
-                {
-                    if (c.rgb.Equals(rgb))
-                    {
-                        name_ = c.name;
-                        break;
-                    }
-                }
-            }
-			name = name_;
-        }
+			return null;
+		}
 
         public override string ToString()
         {
@@ -1035,14 +1100,16 @@ using System.Reflection;
 
 		public Colour Approximate()
 		{
-			return Approximate(lch);
+			return Approximate(lab);
 		}
-		public Colour Approximate(object field)
+
+		public static Colour Approximate(object field)
 		{
 			double D = double.PositiveInfinity;
 			int I = 0;
 			if(field is LCH)
 			{
+				LCH lch = (LCH) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = lch - Standard[i].lch;
@@ -1055,6 +1122,7 @@ using System.Reflection;
 			}
 			else if(field is HWB)
 			{
+				HWB hwb = (HWB) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = hwb - Standard[i].hwb;
@@ -1067,6 +1135,7 @@ using System.Reflection;
 			}
 			else if(field is HSL)
 			{
+				HSL hsl = (HSL) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = hsl - Standard[i].hsl;
@@ -1079,6 +1148,7 @@ using System.Reflection;
 			}
 			else if(field is LAB)
 			{
+				LAB lab = (LAB) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = lab - Standard[i].lab;
@@ -1091,6 +1161,7 @@ using System.Reflection;
 			}
 			else if(field is XYZ)
 			{
+				XYZ xyz = (XYZ) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = xyz - Standard[i].xyz;
@@ -1103,6 +1174,7 @@ using System.Reflection;
 			}
 			else
 			{
+				RGB rgb = (RGB) field;
 				for(int i = 0; i < Standard.Length; ++i)
 				{
 					double d = rgb - Standard[i].rgb;
@@ -1162,14 +1234,6 @@ using System.Reflection;
 			buf.Append(" (");
 			buf.Append(a.keyword);
 			buf.Append(')');
-		}
-		if(!c.rgb.IsValid)
-		{
-			buf.Append(NL);
-			buf.Append(TAB);
-			buf.Append("Nearest sRGB colour: ");
-			RGB q = c.rgb.Clip();
-			buf.Append(q.ToString());
 		}
 		return buf.ToString();
 	}
