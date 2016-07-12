@@ -271,6 +271,16 @@ using System.Reflection;
 			{
 				return Math.Sqrt(Math.Pow(a.r - b.r, 2) + Math.Pow(a.g - b.g, 2) + Math.Pow(a.b - b.b, 2));
 			}
+
+			public static double[] operator%(RGB a, RGB b)
+			{
+				double[] rv = new double[3];
+				rv[0] = a.r - b.r;
+				rv[1] = a.g - b.g;
+				rv[2] = a.b - b.b;
+				return rv;
+			}
+
 			public bool IsValid
 			{
 				get
@@ -331,6 +341,16 @@ using System.Reflection;
 				rv.r = Math.Min(1, Math.Max(0, r));
 				rv.g = Math.Min(1, Math.Max(0, g));
 				rv.b = Math.Min(1, Math.Max(0, b));
+				return rv;
+			}
+
+			public RGB Interpolate(RGB q, double alpha)
+			{
+				double beta = 1 - alpha;
+				RGB rv = new RGB();
+				rv.r = alpha * r + beta * q.r;
+				rv.g = alpha * g + beta * q.g;
+				rv.b = alpha * b + beta * q.b;
 				return rv;
 			}
 		}
@@ -454,6 +474,27 @@ using System.Reflection;
 				double by = b.s * Math.Sin(b.h * Math.PI / 180.0);
 				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
 			}
+
+			public static double[] operator%(HSL a, HSL b)
+			{
+				double[] rv = new double[3];
+				rv[0] = RotSub(a.h, b.h);
+				rv[1] = a.s - b.s;
+				rv[2] = a.l - b.l;
+				return rv;
+			}
+
+
+			public HSL Interpolate(HSL q, double alpha)
+			{
+				double beta = 1 - alpha;
+				HSL rv = new HSL();
+				rv.h = RotMul(alpha, h, beta, q.h);
+				rv.s = alpha * s + beta * q.s;
+				rv.l = alpha * l + beta * q.l;
+				return rv;
+			}
+
 		}
 
 		public struct HWB
@@ -557,6 +598,25 @@ using System.Reflection;
 				double by = b.b * Math.Sin(b.h * Math.PI / 180.0);
 				return Math.Sqrt(Math.Pow(a.w - b.w, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
 			}
+
+			public static double[] operator%(HWB a, HWB b)
+			{
+				double[] rv = new double[3];
+				rv[0] = RotSub(a.h, b.h);
+				rv[1] = a.w - b.w;
+				rv[2] = a.b - b.b;
+				return rv;
+			}
+
+			public HWB Interpolate(HWB q, double alpha)
+			{
+				double beta = 1 - alpha;
+				HWB rv = new HWB();
+				rv.h = RotMul(alpha, h, beta, q.h);
+				rv.w = alpha * w + beta * q.w;
+				rv.b = alpha * b + beta * q.b;
+				return rv;
+			}
 		}
 
 		public struct XYZ
@@ -649,6 +709,26 @@ using System.Reflection;
 			{
 				return Math.Sqrt(Math.Pow(a.x - b.x, 2) + Math.Pow(a.y - b.y, 2) + Math.Pow(a.z - b.z, 2));
 			}
+
+			public static double[] operator%(XYZ a, XYZ b)
+			{
+				double[] rv = new double[3];
+				rv[0] = a.x - b.x;
+				rv[1] = a.y - b.y;
+				rv[2] = a.z - b.z;
+				return rv;
+			}
+
+			public XYZ Interpolate(XYZ q, double alpha)
+			{
+				double beta = 1 - alpha;
+				XYZ rv = new XYZ();
+				rv.x = alpha * x + beta * q.x;
+				rv.y = alpha * y + beta * q.y;
+				rv.z = alpha * z + beta * q.z;
+				return rv;
+			}
+
 		}
 		public struct LAB
 		{
@@ -742,6 +822,25 @@ using System.Reflection;
 			{
 				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(a.a - b.a, 2) + Math.Pow(a.b - b.b, 2));
 			}
+
+			public static double[] operator%(LAB a, LAB b)
+			{
+				double[] rv = new double[3];
+				rv[0] = a.l - b.l;
+				rv[1] = a.a - b.a;
+				rv[2] = a.b - b.b;
+				return rv;
+			}
+
+			public LAB Interpolate(LAB q, double alpha)
+			{
+				double beta = 1 - alpha;
+				LAB rv = new LAB();
+				rv.l = alpha * l + beta * q.l;
+				rv.a = alpha * a + beta * q.a;
+				rv.b = alpha * b + beta * q.b;
+				return rv;
+			}
 		}
 
 		public struct LCH
@@ -811,6 +910,63 @@ using System.Reflection;
 				double bx = b.c * Math.Cos(b.h * Math.PI / 180.0);
 				double by = b.c * Math.Sin(b.h * Math.PI / 180.0);
 				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
+			}
+			public static double[] operator%(LCH a, LCH b)
+			{
+				double[] rv = new double[3];
+				rv[0] = a.l - b.l;
+				rv[1] = a.c - b.c;
+				rv[2] = RotSub(a.h, b.h);
+				return rv;
+			}
+			public LCH Interpolate(LCH q, double alpha)
+			{
+				double beta = 1 - alpha;
+				LCH rv = new LCH();
+				rv.l = alpha * l + beta * q.l;
+				rv.c = alpha * c + beta * q.c;
+				rv.h = RotMul(alpha, h, beta, q.h);
+				return rv;
+			}
+		}
+
+		private static double RotMul(double alpha, double theta, double beta, double zeta)
+		{
+			double delta = theta - zeta;
+			if(delta < -180)
+			{
+				theta += 360;
+			}
+			else if(delta > 180)
+			{
+				theta -= 360;
+			}
+			double iota = alpha * theta + beta * zeta;
+			while(iota < 0)
+			{
+				iota += 360;
+			}
+			while(iota > 360)
+			{
+				iota -= 360;
+			}
+			return iota;
+		}
+
+		private static double RotSub(double a, double b)
+		{
+			double cw = a - b;
+			if(cw < -180)
+			{
+				return cw + 360;
+			}
+			else if(cw > 180)
+			{
+				return cw - 360;
+			}
+			else
+			{
+				return cw;
 			}
 		}
 
@@ -917,10 +1073,23 @@ using System.Reflection;
             }
         }
 
-        public Colour(string input)
+        public Colour(object arg, string name_ = null)
         {
-			if(RGB.TryParse(input, out rgb))
+			if(arg == null)
 			{
+				rgb = new RGB();
+				hsl = new HSL();
+				hwb = new HWB();
+				xyz = new XYZ();
+				lab = new LAB();
+				lch = new LCH();
+				name = name_;
+				clipped = null;
+				return;
+			}
+			else if(arg is RGB)
+			{
+				rgb = (RGB) arg;
 				if(!rgb.IsValid)
 				{
 					clipped = rgb;
@@ -935,10 +1104,11 @@ using System.Reflection;
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
-			else if(HSL.TryParse(input, out hsl))
+			else if(arg is HSL)
 			{
+				hsl = (HSL) arg;
 				rgb = hsl.ToRGB();
 				if(!rgb.IsValid)
 				{
@@ -954,10 +1124,11 @@ using System.Reflection;
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
-			else if(HWB.TryParse(input, out hwb))
+			else if(arg is HWB)
 			{
+				hwb = (HWB) arg;
 				rgb = hwb.ToRGB();
 				if(!rgb.IsValid)
 				{
@@ -973,10 +1144,11 @@ using System.Reflection;
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
-			else if(XYZ.TryParse(input, out xyz))
+			else if(arg is XYZ)
 			{
+				xyz = (XYZ) arg;
 				rgb = xyz.ToRGB();
 				if(!rgb.IsValid)
 				{
@@ -992,10 +1164,11 @@ using System.Reflection;
 				lch = new LCH(lab);
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
-			else if(LAB.TryParse(input, out lab))
+			else if(arg is LAB)
 			{
+				lab = (LAB) arg;
 				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
@@ -1013,10 +1186,11 @@ using System.Reflection;
 				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
-			else if(LCH.TryParse(input, out lch))
+			else if(arg is LCH)
 			{
+				lch = (LCH) arg;
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
@@ -1034,27 +1208,148 @@ using System.Reflection;
 				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
-				name = Find(rgb);
+				name = name_ ?? Find(rgb);
 			}
 			else
 			{
-				string mre = input?.Replace("gray", "grey");
-				foreach (Colour c in Standard)
+				string input = arg.ToString();
+				if(RGB.TryParse(input, out rgb))
 				{
-					if ((StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.name) == 0) || (StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.keyword) == 0))
+					if(!rgb.IsValid)
 					{
-						rgb = c.rgb;
-						hsl = c.hsl;
-						hwb = c.hwb;
-						xyz = c.xyz;
-						lab = c.lab;
-						lch = c.lch;
-						clipped = c.clipped;
-						name = c.name;
-						return;
+						clipped = rgb;
+						rgb = rgb.Clip();
 					}
+					else
+					{
+						clipped = null;
+					}
+					hsl = new HSL(rgb);
+					hwb = new HWB(rgb);
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+					name = name_ ?? Find(rgb);
 				}
-				throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid colour: \"{0}\"", input));
+				else if(HSL.TryParse(input, out hsl))
+				{
+					rgb = hsl.ToRGB();
+					if(!rgb.IsValid)
+					{
+						clipped = hsl;
+						rgb = rgb.Clip();
+						hsl = new HSL(rgb);
+					}
+					else
+					{
+						clipped = null;
+					}
+					hwb = new HWB(rgb);
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+					name = name_ ?? Find(rgb);
+				}
+				else if(HWB.TryParse(input, out hwb))
+				{
+					rgb = hwb.ToRGB();
+					if(!rgb.IsValid)
+					{
+						clipped = hwb;
+						rgb = rgb.Clip();
+						hwb = new HWB(rgb);
+					}
+					else
+					{
+						clipped = null;
+					}
+					hsl = new HSL(rgb);
+					xyz = new XYZ(rgb);
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+					name = Find(rgb);
+				}
+				else if(XYZ.TryParse(input, out xyz))
+				{
+					rgb = xyz.ToRGB();
+					if(!rgb.IsValid)
+					{
+						clipped = xyz;
+						rgb = rgb.Clip();
+						xyz = new XYZ(rgb);
+					}
+					else
+					{
+						clipped = null;
+					}
+					lab = new LAB(xyz);
+					lch = new LCH(lab);
+					hsl = new HSL(rgb);
+					hwb = new HWB(rgb);
+					name = name_ ?? Find(rgb);
+				}
+				else if(LAB.TryParse(input, out lab))
+				{
+					lch = new LCH(lab);
+					xyz = lab.ToXYZ();
+					rgb = xyz.ToRGB();
+					if(!rgb.IsValid)
+					{
+						clipped = lab;
+						rgb = rgb.Clip();
+						xyz = new XYZ(rgb);
+						lab = new LAB(xyz);
+						lch = new LCH(lab);
+					}
+					else
+					{
+						clipped = null;
+					}
+					hsl = new HSL(rgb);
+					hwb = new HWB(rgb);
+					name = name_ ?? Find(rgb);
+				}
+				else if(LCH.TryParse(input, out lch))
+				{
+					lab = lch.ToLAB();
+					xyz = lab.ToXYZ();
+					rgb = xyz.ToRGB();
+					if(!rgb.IsValid)
+					{
+						clipped = lch;
+						rgb = rgb.Clip();
+						xyz = new XYZ(rgb);
+						lab = new LAB(xyz);
+						lch = new LCH(lab);
+					}
+					else
+					{
+						clipped = null;
+					}
+					hsl = new HSL(rgb);
+					hwb = new HWB(rgb);
+					name = name_ ?? Find(rgb);
+				}
+				else
+				{
+					string mre = input?.Replace("gray", "grey");
+					foreach (Colour c in Standard)
+					{
+						if ((StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.name) == 0) || (StringComparer.InvariantCultureIgnoreCase.Compare(mre, c.keyword) == 0))
+						{
+							rgb = c.rgb;
+							hsl = c.hsl;
+							hwb = c.hwb;
+							xyz = c.xyz;
+							lab = c.lab;
+							lch = c.lch;
+							clipped = c.clipped;
+							name = name_ ?? c.name;
+							return;
+						}
+					}
+					throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Not a valid colour: \"{0}\"", input));
+				}
 			}
         }
 
@@ -1082,37 +1377,60 @@ using System.Reflection;
             }
         }
 
-        public static Colour operator+(Colour a, Colour b)
-        {
-            return new Colour(null, pi(a.rgb.r + b.rgb.r), pi(a.rgb.g + b.rgb.g), pi(a.rgb.b + b.rgb.b));
-        }
+		public Colour Interpolate(Colour q, double alpha = 0.5)
+		{
+			return Interpolate(this, q, alpha);
+		}
 
-        public static Colour operator*(Colour a, Colour b)
-        {
-            return new Colour(null, pi(a.rgb.r * b.rgb.r), pi(a.rgb.g * b.rgb.g), pi(a.rgb.b * b.rgb.b));
-        }
+		public static Colour Interpolate(Colour p, Colour q, double alpha = 0.5)
+		{
+			return Interpolate(p, q, alpha, p.lab);
+		}
 
-        public static Colour Interpolate(Colour a, Colour b, double q)
+        public static Colour Interpolate(Colour p, Colour q, double alpha, object field)
         {
-            double qq = 1 - q;
-            return new Colour(null, pi(qq * a.rgb.r + q * b.rgb.r), pi(qq * a.rgb.g + q * b.rgb.g), pi(qq * a.rgb.b + q * b.rgb.b));
+			if(field is LAB)
+			{
+				return new Colour(p.lab.Interpolate(q.lab, alpha));
+			}
+			else if(field is HWB)
+			{
+				return new Colour(p.hwb.Interpolate(q.hwb, alpha));
+			}
+			else if(field is LCH)
+			{
+				return new Colour(p.lch.Interpolate(q.lch, alpha));
+			}
+			else if(field is HSL)
+			{
+				return new Colour(p.hsl.Interpolate(q.hsl, alpha));
+			}
+			else if(field is XYZ)
+			{
+				return new Colour(p.xyz.Interpolate(q.xyz, alpha));
+			}
+			else
+			{
+				return new Colour(p.rgb.Interpolate(q.rgb, alpha));
+			}
         }
 
 		public Colour Approximate()
 		{
-			return Approximate(lab);
+			int index = Approximate(Standard, lab);
+			return Standard[index];
 		}
 
-		public static Colour Approximate(object field)
+		public static int Approximate(Colour[] set, object field)
 		{
 			double D = double.PositiveInfinity;
 			int I = 0;
-			if(field is LCH)
+			if(field is LAB)
 			{
-				LCH lch = (LCH) field;
-				for(int i = 0; i < Standard.Length; ++i)
+				LAB lab = (LAB) field;
+				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = lch - Standard[i].lch;
+					double d = lab - set[i].lab;
 					if(d < D)
 					{
 						D = d;
@@ -1123,9 +1441,22 @@ using System.Reflection;
 			else if(field is HWB)
 			{
 				HWB hwb = (HWB) field;
-				for(int i = 0; i < Standard.Length; ++i)
+				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = hwb - Standard[i].hwb;
+					double d = hwb - set[i].hwb;
+					if(d < D)
+					{
+						D = d;
+						I = i;
+					}
+				}
+			}
+			else if(field is LCH)
+			{
+				LCH lch = (LCH) field;
+				for(int i = 0; i < set.Length; ++i)
+				{
+					double d = lch - set[i].lch;
 					if(d < D)
 					{
 						D = d;
@@ -1136,22 +1467,9 @@ using System.Reflection;
 			else if(field is HSL)
 			{
 				HSL hsl = (HSL) field;
-				for(int i = 0; i < Standard.Length; ++i)
+				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = hsl - Standard[i].hsl;
-					if(d < D)
-					{
-						D = d;
-						I = i;
-					}
-				}
-			}
-			else if(field is LAB)
-			{
-				LAB lab = (LAB) field;
-				for(int i = 0; i < Standard.Length; ++i)
-				{
-					double d = lab - Standard[i].lab;
+					double d = hsl - set[i].hsl;
 					if(d < D)
 					{
 						D = d;
@@ -1162,9 +1480,9 @@ using System.Reflection;
 			else if(field is XYZ)
 			{
 				XYZ xyz = (XYZ) field;
-				for(int i = 0; i < Standard.Length; ++i)
+				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = xyz - Standard[i].xyz;
+					double d = xyz - set[i].xyz;
 					if(d < D)
 					{
 						D = d;
@@ -1175,9 +1493,9 @@ using System.Reflection;
 			else
 			{
 				RGB rgb = (RGB) field;
-				for(int i = 0; i < Standard.Length; ++i)
+				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = rgb - Standard[i].rgb;
+					double d = rgb - set[i].rgb;
 					if(d < D)
 					{
 						D = d;
@@ -1185,7 +1503,7 @@ using System.Reflection;
 					}
 				}
 			}
-			return Standard[I];
+			return I;
 		}
 
 #if COLOUR_INCLUDE_MAIN
@@ -1230,10 +1548,15 @@ using System.Reflection;
 			buf.Append(TAB);
 			buf.Append("Nearest standard colour: ");
 			Colour a = c.Approximate();
-			buf.Append(a.rgb.ToString());
-			buf.Append(" (");
-			buf.Append(a.keyword);
-			buf.Append(')');
+			double[] d = a.lch % c.lch;
+			double D = a.lab - c.lab;
+			buf.Append(string.Format(CultureInfo.InvariantCulture,
+				"{0} ({1}) [L{2:\"+\"0.000;\"-\"0.000},C{3:\"+\"0.000;\"-\"0.000},H{4:\"+\"0.000;\"-\"0.000}] Lab±{5:0.000}",
+				a.rgb.ToString(),
+				a.keyword,
+				d[0], d[1], d[2],
+				D
+			));
 		}
 		return buf.ToString();
 	}
@@ -1249,19 +1572,9 @@ using System.Reflection;
         string pop = null;
         foreach(string a in args)
         {
-            if (a == "+")
+            if (a.StartsWith("+"))
             {
                 op = '+';
-                pop = a;
-            }
-            else if (a == "*")
-            {
-                op = '*';
-                pop = a;
-            }
-            else if (a.StartsWith("~"))
-            {
-                op = '~';
                 if (a.EndsWith("%"))
                 {
                     q = double.Parse(a.Substring(1, a.Length - 2)) / 100;
@@ -1284,16 +1597,6 @@ using System.Reflection;
 					print(a, c);
 	                bool pc = true;
 	                if (op == '+')
-	                {
-	                    current = current + c;
-	                    op = '\0';
-	                }
-	                else if (op == '*')
-	                {
-	                    current = current * c;
-	                    op = '\0';
-	                }
-	                else if (op == '~')
 	                {
 	                    current = Colour.Interpolate(current.Value, c, q);
 	                    q = double.NaN;
