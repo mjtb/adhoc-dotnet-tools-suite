@@ -780,7 +780,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.000000} {1:0.000000} {2:0.000000})", l, a, b);
+				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.##} {1:0.##} {2:0.##})", l, a, b);
 			}
 			public override int GetHashCode()
 			{
@@ -892,7 +892,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.000000} {1:0.000000} {2:0.000000})", l, c, h);
+				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.##} {1:0.##} {2:0.##})", l, c, h);
 			}
 			public LAB ToLAB()
 			{
