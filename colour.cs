@@ -1073,7 +1073,7 @@ using System.Reflection;
             }
         }
 
-        public Colour(object arg, string name_ = null)
+        public Colour(object arg, string name_ = null, bool unclipped = false)
         {
 			if(arg == null)
 			{
@@ -1090,7 +1090,7 @@ using System.Reflection;
 			else if(arg is RGB)
 			{
 				rgb = (RGB) arg;
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = rgb;
 					rgb = rgb.Clip();
@@ -1110,7 +1110,7 @@ using System.Reflection;
 			{
 				hsl = (HSL) arg;
 				rgb = hsl.ToRGB();
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = hsl;
 					rgb = rgb.Clip();
@@ -1130,7 +1130,7 @@ using System.Reflection;
 			{
 				hwb = (HWB) arg;
 				rgb = hwb.ToRGB();
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = hwb;
 					rgb = rgb.Clip();
@@ -1150,7 +1150,7 @@ using System.Reflection;
 			{
 				xyz = (XYZ) arg;
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = xyz;
 					rgb = rgb.Clip();
@@ -1172,7 +1172,7 @@ using System.Reflection;
 				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = lab;
 					rgb = rgb.Clip();
@@ -1194,7 +1194,7 @@ using System.Reflection;
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!rgb.IsValid)
+				if(!unclipped && !rgb.IsValid)
 				{
 					clipped = lch;
 					rgb = rgb.Clip();
@@ -1215,7 +1215,7 @@ using System.Reflection;
 				string input = arg.ToString();
 				if(RGB.TryParse(input, out rgb))
 				{
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = rgb;
 						rgb = rgb.Clip();
@@ -1234,7 +1234,7 @@ using System.Reflection;
 				else if(HSL.TryParse(input, out hsl))
 				{
 					rgb = hsl.ToRGB();
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = hsl;
 						rgb = rgb.Clip();
@@ -1253,7 +1253,7 @@ using System.Reflection;
 				else if(HWB.TryParse(input, out hwb))
 				{
 					rgb = hwb.ToRGB();
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = hwb;
 						rgb = rgb.Clip();
@@ -1272,7 +1272,7 @@ using System.Reflection;
 				else if(XYZ.TryParse(input, out xyz))
 				{
 					rgb = xyz.ToRGB();
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = xyz;
 						rgb = rgb.Clip();
@@ -1293,7 +1293,7 @@ using System.Reflection;
 					lch = new LCH(lab);
 					xyz = lab.ToXYZ();
 					rgb = xyz.ToRGB();
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = lab;
 						rgb = rgb.Clip();
@@ -1314,7 +1314,7 @@ using System.Reflection;
 					lab = lch.ToLAB();
 					xyz = lab.ToXYZ();
 					rgb = xyz.ToRGB();
-					if(!rgb.IsValid)
+					if(!unclipped && !rgb.IsValid)
 					{
 						clipped = lch;
 						rgb = rgb.Clip();
@@ -1387,31 +1387,31 @@ using System.Reflection;
 			return Interpolate(p, q, alpha, p.lab);
 		}
 
-        public static Colour Interpolate(Colour p, Colour q, double alpha, object field)
+        public static Colour Interpolate(Colour p, Colour q, double alpha, object field, bool unclipped = false)
         {
 			if(field is LAB)
 			{
-				return new Colour(p.lab.Interpolate(q.lab, alpha));
+				return new Colour(p.lab.Interpolate(q.lab, alpha), null, unclipped);
 			}
 			else if(field is HWB)
 			{
-				return new Colour(p.hwb.Interpolate(q.hwb, alpha));
+				return new Colour(p.hwb.Interpolate(q.hwb, alpha), null, unclipped);
 			}
 			else if(field is LCH)
 			{
-				return new Colour(p.lch.Interpolate(q.lch, alpha));
+				return new Colour(p.lch.Interpolate(q.lch, alpha), null, unclipped);
 			}
 			else if(field is HSL)
 			{
-				return new Colour(p.hsl.Interpolate(q.hsl, alpha));
+				return new Colour(p.hsl.Interpolate(q.hsl, alpha), null, unclipped);
 			}
 			else if(field is XYZ)
 			{
-				return new Colour(p.xyz.Interpolate(q.xyz, alpha));
+				return new Colour(p.xyz.Interpolate(q.xyz, alpha), null, unclipped);
 			}
 			else
 			{
-				return new Colour(p.rgb.Interpolate(q.rgb, alpha));
+				return new Colour(p.rgb.Interpolate(q.rgb, alpha), null, unclipped);
 			}
         }
 
@@ -1564,15 +1564,32 @@ using System.Reflection;
 	{
 		Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}:{1}{2}", a, NL1, format(c, TAB, NL2)));
 	}
+	static readonly string[] Unclip = new string[]{ "/unclip", "/unclipped", "--unclip", "--unclipped", "-u", "/u" };
+	static bool unclip(string a)
+	{
+		for(int i = 0; i < Unclip.Length; ++i)
+		{
+			if(StringComparer.OrdinalIgnoreCase.Compare(a, Unclip[i]) == 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
     static void Main(string[] args)
     {
         Colour? current = null;
         double q = double.NaN;
         char op = '\0';
         string pop = null;
+		bool unclipped = false;
         foreach(string a in args)
         {
-            if (a.StartsWith("+"))
+			if(string.IsNullOrWhiteSpace(a))
+			{
+				continue;
+			}
+            else if (a[0] == '+')
             {
                 op = '+';
                 if (a.EndsWith("%"))
@@ -1589,16 +1606,20 @@ using System.Reflection;
                 }
                 pop = a;
             }
+			else if((a[0] == '/' || a[0] == '-') && unclip(a))
+			{
+				unclipped = true;
+			}
             else
             {
 				try
 				{
-	                Colour c = new Colour(a);
+	                Colour c = new Colour(a, null, unclipped);
 					print(a, c);
 	                bool pc = true;
 	                if (op == '+')
 	                {
-	                    current = Colour.Interpolate(current.Value, c, q);
+	                    current = Colour.Interpolate(current.Value, c, q, unclipped);
 	                    q = double.NaN;
 	                    op = '\0';
 	                }
