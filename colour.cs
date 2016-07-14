@@ -160,7 +160,7 @@ using System.Reflection;
 		public struct RGB
 		{
 			private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
-	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<g>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)"),
+	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<g>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)"),
 				HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
 			private static double unlin(double v)
 			{
@@ -244,12 +244,12 @@ using System.Reflection;
 
 			public string ToDecimalString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "rgb({0},{1},{2})", pi(r), pi(g), pi(b));
+				return string.Format(CultureInfo.InvariantCulture, "rgb({0},{1},{2})", ps(r, 0, 255), ps(g, 0, 255), ps(b, 0, 255));
 			}
 
 			public string ToPercentageString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "rgb({0:0.000}%,{1:0.000}%,{2:0.000}%)", r * 100.0, g * 100.0, b * 100.0);
+				return string.Format(CultureInfo.InvariantCulture, "rgb({0}%,{1}%,{2}%)", ps(r, 2, 100), ps(g, 2, 100), ps(b, 2, 100));
 			}
 
 			public override string ToString()
@@ -374,7 +374,7 @@ using System.Reflection;
 
 		public struct HSL
 		{
-			private static readonly Regex RE = new Regex("hsl\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<s>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<l>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)");
+			private static readonly Regex RE = new Regex("hsl\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<s>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<l>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double s;
 			public double l;
@@ -389,7 +389,7 @@ using System.Reflection;
 				Match m = RE.Match(s);
 				if (m.Success)
 				{
-					hsl = new HSL(double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0, pn(m.Groups["s"].ToString(), 100), pn(m.Groups["l"].ToString(), 100));
+					hsl = new HSL(pm(pn(m.Groups["h"].ToString(), 360), 360), pn(m.Groups["s"].ToString(), 100), pn(m.Groups["l"].ToString(), 100));
 					return true;
 				}
 				hsl = new HSL(double.NaN, double.NaN, double.NaN);
@@ -438,7 +438,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "hsl({0},{1}%,{2}%)", pi(h, 360), pi(s, 100), pi(l, 100));
+				return string.Format(CultureInfo.InvariantCulture, "hsl({0},{1}%,{2}%)", ps(h, 0), ps(s, 0, 100), ps(l, 0, 100));
 			}
 			public override int GetHashCode()
 			{
@@ -516,7 +516,7 @@ using System.Reflection;
 
 		public struct HWB
 		{
-			private static readonly Regex RE = new Regex("hwb\\(\\s*(?<h>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?\\u00b0?)\\s*,\\s*(?<w>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*,\\s*(?<b>(0|[1-9][0-9]{0,2})(\\.[0-9]+)?%?)\\s*\\)");
+			private static readonly Regex RE = new Regex("hwb\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<w>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double w;
 			public double b;
@@ -567,7 +567,7 @@ using System.Reflection;
 				Match m = RE.Match(s);
 				if (m.Success)
 				{
-					hwb = new HWB(double.Parse(m.Groups["h"].ToString().TrimEnd('\u00B0')) / 360.0, pn(m.Groups["w"].ToString(), 100), pn(m.Groups["b"].ToString(), 100));
+					hwb = new HWB(pm(pn(m.Groups["h"].ToString(), 360), 360), pn(m.Groups["w"].ToString(), 100), pn(m.Groups["b"].ToString(), 100));
 					return true;
 				}
 				hwb = new HWB(double.NaN, double.NaN, double.NaN);
@@ -575,7 +575,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "hwb({0},{1}%,{2}%)", pi(h, 360), pi(w, 100), pi(b, 100));
+				return string.Format(CultureInfo.InvariantCulture, "hwb({0},{1}%,{2}%)", ps(h, 0), ps(w, 0, 100), ps(b, 0, 100));
 			}
 			public override int GetHashCode()
 			{
@@ -638,7 +638,7 @@ using System.Reflection;
 
 		public struct XYZ
 		{
-			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<y>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*,\\s*(?<z>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
+			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<y>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<z>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			private static readonly double[,] M = new double[3,3] {
 				{ 0.4124564, 0.3575761, 0.1804375 },
 				{ 0.2126729, 0.7151522, 0.0721750 },
@@ -686,7 +686,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "xyz({0:0.000000},{1:0.000000},{2:0.000000})", x, y, z);
+				return string.Format(CultureInfo.InvariantCulture, "xyz({0},{1},{2})", ps(x, 6), ps(y, 6), ps(z, 6));
 			}
 			public RGB ToRGB()
 			{
@@ -749,7 +749,7 @@ using System.Reflection;
 		}
 		public struct LAB
 		{
-			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<a>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<b>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s*\\)");
+			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<a>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<b>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			public double l;
 			public double a;
 			public double b;
@@ -797,7 +797,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lab({0:0.##} {1:0.##} {2:0.##})", l, a, b);
+				return string.Format(CultureInfo.InvariantCulture, "lab({0} {1} {2})", ps(l, 2), ps(a, 2), ps(b, 2));
 			}
 			public override int GetHashCode()
 			{
@@ -862,7 +862,7 @@ using System.Reflection;
 
 		public struct LCH
 		{
-			private static readonly Regex RE = new Regex("lch\\(\\s*(?<l>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<c>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\\s+(?<h>(-|\\+)?(0|[1-9][0-9]{0,2})(\\.[0-9]+)?)\u00b0?\\s*\\)");
+			private static readonly Regex RE = new Regex("lch\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<c>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<h>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*\\)");
 			public double l;
 			public double c;
 			public double h;
@@ -893,7 +893,7 @@ using System.Reflection;
 				Match m = RE.Match(s);
 				if (m.Success)
 				{
-					lch = new LCH(pn(m.Groups["l"].ToString(), 1), pn(m.Groups["c"].ToString(), 1), pn(m.Groups["h"].ToString(), 1));
+					lch = new LCH(pn(m.Groups["l"].ToString(), 1), pn(m.Groups["c"].ToString(), 1), pm(pn(m.Groups["h"].ToString(), 360), 360));
 					return true;
 				}
 				lch = new LCH(double.NaN, double.NaN, double.NaN);
@@ -909,7 +909,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lch({0:0.##} {1:0.##} {2:0.##})", l, c, h);
+				return string.Format(CultureInfo.InvariantCulture, "lch({0} {1} {2})", ps(l, 2), ps(c, 2), ps(h, 2));
 			}
 			public LAB ToLAB()
 			{
@@ -1019,20 +1019,78 @@ using System.Reflection;
 
         private static double pn(string i, double q = 255.0)
         {
-            if (i.EndsWith("%"))
+			if(i == "*")
+			{
+				return double.NaN;
+			}
+            else if (i.EndsWith("%"))
             {
                 return double.Parse(i.TrimEnd('%')) / 100.0;
             }
-            else
-            {
+			else if(i.EndsWith("°"))
+			{
+				return double.Parse(i.TrimEnd('°')) / 360.0;
+            }
+			else
+			{
                 return double.Parse(i) / q;
             }
         }
+
+		private static string ps(double d, int digits, double coef = 1, bool plus = false)
+		{
+			if(double.IsNaN(d))
+			{
+				return plus ? "±*" : "*";
+			}
+			else if(double.IsPositiveInfinity(d))
+			{
+				return "+∞";
+			}
+			else if(double.IsNegativeInfinity(d))
+			{
+				return "-∞";
+			}
+			else if(digits > 0)
+			{
+				if(plus)
+				{
+					return string.Format(CultureInfo.InvariantCulture, "{0:\"+\"0." + new string('#', digits) + ";\"-\"0." + new string('#', digits) + "}", d * coef);
+				}
+				else
+				{
+					return string.Format(CultureInfo.InvariantCulture, "{0:0." + new string('#', digits) + "}", d * coef);
+				}
+			}
+			else
+			{
+				if(plus)
+				{
+					return string.Format(CultureInfo.InvariantCulture, "{0:\"+\"0;\"-\"0}", (int)Math.Round(coef * d));
+				}
+				else
+				{
+					return string.Format(CultureInfo.InvariantCulture, "{0}", (int)Math.Round(coef * d));
+				}
+			}
+		}
+		private static double pm(double d, double q)
+		{
+			if(double.IsNaN(d) || double.IsPositiveInfinity(d) || double.IsNegativeInfinity(d))
+			{
+				return d;
+			}
+			else
+			{
+				return d * q;
+			}
+		}
 
 		private static int pi(double d, int q = 255)
 		{
 			return pi(d, 1, 0, q);
 		}
+
 		private static int pi(double d, double m, double n, int q)
 		{
 			if (double.IsNaN(d))
@@ -1469,13 +1527,13 @@ using System.Reflection;
 			double D = c.rgb - rgbspec.Value;
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
-				"[R{0:\"+\"0.000;\"-\"0.###}%,G{1:\"+\"0.###;\"-\"0.###}%,B{2:\"+\"0.###;\"-\"0.###}%]",
-				d[0] * 100, d[1] * 100, d[2] * 100
+				"[R{0}%,G{1}%,B{2}%]",
+				ps(d[0], 3, 100, true), ps(d[1], 3, 100, true), ps(d[2], 3, 100, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"±{0:0.###}",
-				D
+				"±{0}",
+				ps(D, 3)
 			));
 		}
 		else
@@ -1490,8 +1548,8 @@ using System.Reflection;
 			buf.Append(TAB);
 			double[] d = c.xyz % xyzspec.Value;
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"[X{0:\"+\"0.000;\"-\"0.###},Y{1:\"+\"0.###;\"-\"0.###},Z{2:\"+\"0.###;\"-\"0.###}]",
-				d[0], d[1], d[2]
+				"[X{0},Y{1},Z{2}]",
+				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
 			));
 		}
 		else
@@ -1507,13 +1565,13 @@ using System.Reflection;
 			double D = c.lab - labspec.Value;
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
-				"[L*{0:\"+\"0.000;\"-\"0.###},a*{1:\"+\"0.###;\"-\"0.###},b*{2:\"+\"0.###;\"-\"0.###}]",
-				d[0], d[1], d[2]
+				"[L*{0},a*{1},b*{2}]",
+				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"±{0:0.###}",
-				D
+				"±{0}",
+				ps(D, 3)
 			));
 		}
 		else
@@ -1528,8 +1586,8 @@ using System.Reflection;
 			buf.Append(TAB);
 			double[] d = c.lch % lchspec.Value;
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
-				"[L*{0:\"+\"0.000;\"-\"0.###},C*{1:\"+\"0.###;\"-\"0.###},h°{2:\"+\"0.###;\"-\"0.###}]",
-				d[0], d[1], d[2]
+				"[L*{0},C*{1},h°{2}]",
+				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
 			)));
 		}
 		else
@@ -1556,13 +1614,13 @@ using System.Reflection;
 			)));
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
-				"[L*{0:\"+\"0.###;\"-\"0.###},C*{1:\"+\"0.###;\"-\"0.###},h°{2:\"+\"0.###;\"-\"0.###}]",
-				d[0], d[1], d[2]
+				"[L*{0},C*{1},h°{2}]",
+				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"±{0:0.###}",
-				D
+				"±{0}",
+				ps(D, 3)
 			));
 		}
 		return buf.ToString();
