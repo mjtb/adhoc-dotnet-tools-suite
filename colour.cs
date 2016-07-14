@@ -267,6 +267,23 @@ using System.Reflection;
 				return (o is RGB) && (GetHashCode() == o.GetHashCode());
 			}
 
+			public static bool operator==(RGB a, RGB b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(RGB a, RGB b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(RGB a, RGB b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(RGB a, RGB b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
+			}
+
 			public static double operator-(RGB a, RGB b)
 			{
 				return Math.Sqrt(Math.Pow(a.r - b.r, 2) + Math.Pow(a.g - b.g, 2) + Math.Pow(a.b - b.b, 2));
@@ -483,6 +500,23 @@ using System.Reflection;
 				return new RGB(rho(m1, m2, h + 1.0 / 3.0), rho(m1, m2, h), rho(m1, m2, h - 1.0 / 3.0));
 			}
 
+			public static bool operator==(HSL a, HSL b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(HSL a, HSL b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(HSL a, HSL b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(HSL a, HSL b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
+			}
+
 			public static double operator-(HSL a, HSL b)
 			{
 				double ax = a.s * Math.Cos(a.h * Math.PI / 180.0);
@@ -585,6 +619,22 @@ using System.Reflection;
 			{
 				return (o is HWB) && (o.GetHashCode() == GetHashCode());
 			}
+			public static bool operator==(HWB a, HWB b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(HWB a, HWB b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(HWB a, HWB b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(HWB a, HWB b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
+			}
 			public RGB ToRGB()
 			{
 				double W = w;
@@ -683,6 +733,22 @@ using System.Reflection;
 			public override bool Equals(object o)
 			{
 				return (o is XYZ) && (o.GetHashCode() == GetHashCode());
+			}
+			public static bool operator==(XYZ a, XYZ b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(XYZ a, XYZ b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(XYZ a, XYZ b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(XYZ a, XYZ b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
 			}
 			public override string ToString()
 			{
@@ -807,6 +873,22 @@ using System.Reflection;
 			{
 				return (o is LAB) && (o.GetHashCode() == GetHashCode());
 			}
+			public static bool operator==(LAB a, LAB b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(LAB a, LAB b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(LAB a, LAB b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(LAB a, LAB b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
+			}
 			public RGB ToRGB()
 			{
 				return ToXYZ().ToRGB();
@@ -902,6 +984,22 @@ using System.Reflection;
 			public override int GetHashCode()
 			{
 				return (pi(l, 100, 0, 1023) << 20) | (pi(c, 230, 0, 1023) << 10) | pi(h, 360, 0, 1023);
+			}
+			public static bool operator==(LCH a, LCH b)
+			{
+				return a.GetHashCode() == b.GetHashCode();
+			}
+			public static bool operator!=(LCH a, LCH b)
+			{
+				return a.GetHashCode() != b.GetHashCode();
+			}
+			public static bool operator<(LCH a, LCH b)
+			{
+				return a.GetHashCode() < b.GetHashCode();
+			}
+			public static bool operator>(LCH a, LCH b)
+			{
+				return a.GetHashCode() > b.GetHashCode();
 			}
 			public override bool Equals(object o)
 			{
