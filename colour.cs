@@ -295,6 +295,21 @@ using System.Reflection;
 				{
 					return this;
 				}
+				else
+				{
+					RGB rv = new RGB();
+					rv.r = Math.Min(1, Math.Max(0, r));
+					rv.g = Math.Min(1, Math.Max(0, g));
+					rv.b = Math.Min(1, Math.Max(0, b));
+					return rv;
+				}
+			}
+			public RGB Fix()
+			{
+				if(IsValid)
+				{
+					return this;
+				}
 				LCH origch = new LCH(this);
 				LAB origab = origch.ToLAB();
 				for(int g = 0; g <= 20; ++g)
@@ -977,7 +992,7 @@ using System.Reflection;
 		public readonly LAB lab;
 		public readonly LCH lch;
         public readonly string name;
-		public readonly object clipped;
+
 		public string keyword
 		{
 			get
@@ -1038,15 +1053,6 @@ using System.Reflection;
 		private Colour(string name_, int r, int g, int b)
         {
             rgb = new RGB(r / 255.0, g / 255.0, b / 255.0);
-			if(!rgb.IsValid)
-			{
-				clipped = rgb;
-				rgb = rgb.Clip();
-			}
-			else
-			{
-				clipped = false;
-			}
 			hsl = new HSL(rgb);
 			hwb = new HWB(rgb);
 			xyz = new XYZ(rgb);
@@ -1073,7 +1079,7 @@ using System.Reflection;
             }
         }
 
-        public Colour(object arg, string name_ = null, bool unclipped = false)
+        public Colour(object arg, string name_ = null)
         {
 			if(arg == null)
 			{
@@ -1084,21 +1090,11 @@ using System.Reflection;
 				lab = new LAB();
 				lch = new LCH();
 				name = name_;
-				clipped = null;
 				return;
 			}
 			else if(arg is RGB)
 			{
 				rgb = (RGB) arg;
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = rgb;
-					rgb = rgb.Clip();
-				}
-				else
-				{
-					clipped = null;
-				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				xyz = new XYZ(rgb);
@@ -1110,16 +1106,6 @@ using System.Reflection;
 			{
 				hsl = (HSL) arg;
 				rgb = hsl.ToRGB();
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = hsl;
-					rgb = rgb.Clip();
-					hsl = new HSL(rgb);
-				}
-				else
-				{
-					clipped = null;
-				}
 				hwb = new HWB(rgb);
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
@@ -1130,16 +1116,6 @@ using System.Reflection;
 			{
 				hwb = (HWB) arg;
 				rgb = hwb.ToRGB();
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = hwb;
-					rgb = rgb.Clip();
-					hwb = new HWB(rgb);
-				}
-				else
-				{
-					clipped = null;
-				}
 				hsl = new HSL(rgb);
 				xyz = new XYZ(rgb);
 				lab = new LAB(xyz);
@@ -1150,16 +1126,6 @@ using System.Reflection;
 			{
 				xyz = (XYZ) arg;
 				rgb = xyz.ToRGB();
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = xyz;
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-				}
-				else
-				{
-					clipped = null;
-				}
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				hsl = new HSL(rgb);
@@ -1172,18 +1138,6 @@ using System.Reflection;
 				lch = new LCH(lab);
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = lab;
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-					lab = new LAB(xyz);
-					lch = new LCH(lab);
-				}
-				else
-				{
-					clipped = null;
-				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				name = name_ ?? Find(rgb);
@@ -1194,18 +1148,6 @@ using System.Reflection;
 				lab = lch.ToLAB();
 				xyz = lab.ToXYZ();
 				rgb = xyz.ToRGB();
-				if(!unclipped && !rgb.IsValid)
-				{
-					clipped = lch;
-					rgb = rgb.Clip();
-					xyz = new XYZ(rgb);
-					lab = new LAB(xyz);
-					lch = new LCH(lab);
-				}
-				else
-				{
-					clipped = null;
-				}
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				name = name_ ?? Find(rgb);
@@ -1215,15 +1157,6 @@ using System.Reflection;
 				string input = arg.ToString();
 				if(RGB.TryParse(input, out rgb))
 				{
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = rgb;
-						rgb = rgb.Clip();
-					}
-					else
-					{
-						clipped = null;
-					}
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					xyz = new XYZ(rgb);
@@ -1234,16 +1167,6 @@ using System.Reflection;
 				else if(HSL.TryParse(input, out hsl))
 				{
 					rgb = hsl.ToRGB();
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = hsl;
-						rgb = rgb.Clip();
-						hsl = new HSL(rgb);
-					}
-					else
-					{
-						clipped = null;
-					}
 					hwb = new HWB(rgb);
 					xyz = new XYZ(rgb);
 					lab = new LAB(xyz);
@@ -1253,16 +1176,6 @@ using System.Reflection;
 				else if(HWB.TryParse(input, out hwb))
 				{
 					rgb = hwb.ToRGB();
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = hwb;
-						rgb = rgb.Clip();
-						hwb = new HWB(rgb);
-					}
-					else
-					{
-						clipped = null;
-					}
 					hsl = new HSL(rgb);
 					xyz = new XYZ(rgb);
 					lab = new LAB(xyz);
@@ -1272,16 +1185,6 @@ using System.Reflection;
 				else if(XYZ.TryParse(input, out xyz))
 				{
 					rgb = xyz.ToRGB();
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = xyz;
-						rgb = rgb.Clip();
-						xyz = new XYZ(rgb);
-					}
-					else
-					{
-						clipped = null;
-					}
 					lab = new LAB(xyz);
 					lch = new LCH(lab);
 					hsl = new HSL(rgb);
@@ -1293,18 +1196,6 @@ using System.Reflection;
 					lch = new LCH(lab);
 					xyz = lab.ToXYZ();
 					rgb = xyz.ToRGB();
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = lab;
-						rgb = rgb.Clip();
-						xyz = new XYZ(rgb);
-						lab = new LAB(xyz);
-						lch = new LCH(lab);
-					}
-					else
-					{
-						clipped = null;
-					}
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					name = name_ ?? Find(rgb);
@@ -1314,18 +1205,6 @@ using System.Reflection;
 					lab = lch.ToLAB();
 					xyz = lab.ToXYZ();
 					rgb = xyz.ToRGB();
-					if(!unclipped && !rgb.IsValid)
-					{
-						clipped = lch;
-						rgb = rgb.Clip();
-						xyz = new XYZ(rgb);
-						lab = new LAB(xyz);
-						lch = new LCH(lab);
-					}
-					else
-					{
-						clipped = null;
-					}
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					name = name_ ?? Find(rgb);
@@ -1343,7 +1222,6 @@ using System.Reflection;
 							xyz = c.xyz;
 							lab = c.lab;
 							lch = c.lch;
-							clipped = c.clipped;
 							name = name_ ?? c.name;
 							return;
 						}
@@ -1387,31 +1265,31 @@ using System.Reflection;
 			return Interpolate(p, q, alpha, p.lab);
 		}
 
-        public static Colour Interpolate(Colour p, Colour q, double alpha, object field, bool unclipped = false)
+        public static Colour Interpolate(Colour p, Colour q, double alpha, object field)
         {
 			if(field is LAB)
 			{
-				return new Colour(p.lab.Interpolate(q.lab, alpha), null, unclipped);
+				return new Colour(p.lab.Interpolate(q.lab, alpha), null);
 			}
 			else if(field is HWB)
 			{
-				return new Colour(p.hwb.Interpolate(q.hwb, alpha), null, unclipped);
+				return new Colour(p.hwb.Interpolate(q.hwb, alpha), null);
 			}
 			else if(field is LCH)
 			{
-				return new Colour(p.lch.Interpolate(q.lch, alpha), null, unclipped);
+				return new Colour(p.lch.Interpolate(q.lch, alpha), null);
 			}
 			else if(field is HSL)
 			{
-				return new Colour(p.hsl.Interpolate(q.hsl, alpha), null, unclipped);
+				return new Colour(p.hsl.Interpolate(q.hsl, alpha), null);
 			}
 			else if(field is XYZ)
 			{
-				return new Colour(p.xyz.Interpolate(q.xyz, alpha), null, unclipped);
+				return new Colour(p.xyz.Interpolate(q.xyz, alpha), null);
 			}
 			else
 			{
-				return new Colour(p.rgb.Interpolate(q.rgb, alpha), null, unclipped);
+				return new Colour(p.rgb.Interpolate(q.rgb, alpha), null);
 			}
         }
 
@@ -1564,17 +1442,33 @@ using System.Reflection;
 	{
 		Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}:{1}{2}", a, NL1, format(c, TAB, NL2)));
 	}
-	static readonly string[] Unclip = new string[]{ "/unclip", "/unclipped", "--unclip", "--unclipped", "-u", "/u" };
-	static bool unclip(string a)
+	static readonly string[] Unclipped = new string[]{ "/unclip", "/unclipped", "--unclip", "--unclipped", "-u", "/u" };
+	static readonly string[] Fixed = new string[]{ "/fix", "/fixed", "--fix", "--fixed", "-f", "/f" };
+	static bool Matches(string a, string[] args)
 	{
-		for(int i = 0; i < Unclip.Length; ++i)
+		for(int i = 0; i < args.Length; ++i)
 		{
-			if(StringComparer.OrdinalIgnoreCase.Compare(a, Unclip[i]) == 0)
+			if(StringComparer.OrdinalIgnoreCase.Compare(a, args[i]) == 0)
 			{
 				return true;
 			}
 		}
 		return false;
+	}
+	static Colour rectify(Colour c, bool clip, bool fix)
+	{
+		if(!c.rgb.IsValid)
+		{
+			if(fix)
+			{
+				return new Colour(c.rgb.Fix());
+			}
+			else if(clip)
+			{
+				return new Colour(c.rgb.Clip());
+			}
+		}
+		return c;
 	}
     static void Main(string[] args)
     {
@@ -1582,7 +1476,7 @@ using System.Reflection;
         double q = double.NaN;
         char op = '\0';
         string pop = null;
-		bool unclipped = false;
+		bool clip = true, fix = false;
         foreach(string a in args)
         {
 			if(string.IsNullOrWhiteSpace(a))
@@ -1606,20 +1500,27 @@ using System.Reflection;
                 }
                 pop = a;
             }
-			else if((a[0] == '/' || a[0] == '-') && unclip(a))
+			else if(a[0] == '/' || a[0] == '-')
 			{
-				unclipped = true;
+				if(Matches(a, Unclipped))
+				{
+					clip = false;
+				}
+				else if(Matches(a, Fixed))
+				{
+					fix = true;
+				}
 			}
             else
             {
 				try
 				{
-	                Colour c = new Colour(a, null, unclipped);
+	                Colour c = rectify(new Colour(a, null), clip, fix);
 					print(a, c);
 	                bool pc = true;
 	                if (op == '+')
 	                {
-	                    current = Colour.Interpolate(current.Value, c, q, unclipped);
+	                    current = rectify(Colour.Interpolate(current.Value, c, q), clip, fix);
 	                    q = double.NaN;
 	                    op = '\0';
 	                }
