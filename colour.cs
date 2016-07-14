@@ -327,8 +327,8 @@ using System.Reflection;
 							for(int x = 0; x <= 7; ++x)
 							{
 								LCH q = new LCH();
-								q.c = origch.c + v * ((x & 1) == 0 ? 1 : -1);
-								q.l = origch.l + u * (((x >> 1) & 1) == 0 ? 1 : -1);
+								q.c = Math.Max(0, Math.Min(230, origch.c + v * ((x & 1) == 0 ? 1 : -1)));
+								q.l = Math.Max(0, Math.Min(100, origch.l + u * (((x >> 1) & 1) == 0 ? 1 : -1)));
 								q.h = origch.h + t * (((x >> 2) & 1) == 0 ? 1 : -1);
 								while(q.h < 0)
 								{
@@ -994,6 +994,7 @@ using System.Reflection;
 		public readonly LAB lab;
 		public readonly LCH lch;
         public readonly string name;
+		public readonly object spec;
 
 		public string keyword
 		{
@@ -1061,6 +1062,7 @@ using System.Reflection;
 			lab = new LAB(xyz);
 			lch = new LCH(lab);
 			name = name_ ?? Find(rgb);
+			spec = rgb;
         }
 
         public override int GetHashCode()
@@ -1092,6 +1094,7 @@ using System.Reflection;
 				lab = new LAB();
 				lch = new LCH();
 				name = name_;
+				spec = null;
 				return;
 			}
 			else if(arg is RGB)
@@ -1103,6 +1106,7 @@ using System.Reflection;
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				name = name_ ?? Find(rgb);
+				spec = rgb;
 			}
 			else if(arg is HSL)
 			{
@@ -1113,6 +1117,7 @@ using System.Reflection;
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				name = name_ ?? Find(rgb);
+				spec = hsl;
 			}
 			else if(arg is HWB)
 			{
@@ -1123,6 +1128,7 @@ using System.Reflection;
 				lab = new LAB(xyz);
 				lch = new LCH(lab);
 				name = name_ ?? Find(rgb);
+				spec = hwb;
 			}
 			else if(arg is XYZ)
 			{
@@ -1133,6 +1139,7 @@ using System.Reflection;
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				name = name_ ?? Find(rgb);
+				spec = xyz;
 			}
 			else if(arg is LAB)
 			{
@@ -1143,6 +1150,7 @@ using System.Reflection;
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				name = name_ ?? Find(rgb);
+				spec = lab;
 			}
 			else if(arg is LCH)
 			{
@@ -1153,6 +1161,7 @@ using System.Reflection;
 				hsl = new HSL(rgb);
 				hwb = new HWB(rgb);
 				name = name_ ?? Find(rgb);
+				spec = lch;
 			}
 			else
 			{
@@ -1165,6 +1174,7 @@ using System.Reflection;
 					lab = new LAB(xyz);
 					lch = new LCH(lab);
 					name = name_ ?? Find(rgb);
+					spec = rgb;
 				}
 				else if(HSL.TryParse(input, out hsl))
 				{
@@ -1174,6 +1184,7 @@ using System.Reflection;
 					lab = new LAB(xyz);
 					lch = new LCH(lab);
 					name = name_ ?? Find(rgb);
+					spec = hsl;
 				}
 				else if(HWB.TryParse(input, out hwb))
 				{
@@ -1183,6 +1194,7 @@ using System.Reflection;
 					lab = new LAB(xyz);
 					lch = new LCH(lab);
 					name = Find(rgb);
+					spec = hwb;
 				}
 				else if(XYZ.TryParse(input, out xyz))
 				{
@@ -1192,6 +1204,7 @@ using System.Reflection;
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					name = name_ ?? Find(rgb);
+					spec = xyz;
 				}
 				else if(LAB.TryParse(input, out lab))
 				{
@@ -1201,6 +1214,7 @@ using System.Reflection;
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					name = name_ ?? Find(rgb);
+					spec = lab;
 				}
 				else if(LCH.TryParse(input, out lch))
 				{
@@ -1210,6 +1224,7 @@ using System.Reflection;
 					hsl = new HSL(rgb);
 					hwb = new HWB(rgb);
 					name = name_ ?? Find(rgb);
+					spec = lch;
 				}
 				else
 				{
@@ -1225,6 +1240,7 @@ using System.Reflection;
 							lab = c.lab;
 							lch = c.lch;
 							name = name_ ?? c.name;
+							spec = input ?? string.Empty;
 							return;
 						}
 					}
@@ -1387,8 +1403,51 @@ using System.Reflection;
 		}
 
 #if COLOUR_INCLUDE_MAIN
-	static string format(Colour c, string TAB = "\t", string NL = "")
+	static string pad(string s, int width = 36)
 	{
+		if(s.Length < width)
+		{
+			return s + new string(' ', width - s.Length);
+		}
+		else
+		{
+			return s;
+		}
+	}
+	static string format(Colour c, object spec, string TAB = "    ", string NL = "")
+	{
+		RGB? rgbspec = null;
+		XYZ? xyzspec = null;
+		LAB? labspec = null;
+		LCH? lchspec = null;
+		if(spec is LCH)
+		{
+			lchspec = (LCH) spec;
+			labspec = lchspec.Value.ToLAB();
+			xyzspec = labspec.Value.ToXYZ();
+			rgbspec = xyzspec.Value.ToRGB();
+		}
+		else if(spec is LAB)
+		{
+			labspec = (LAB) spec;
+			lchspec = new LCH(labspec.Value);
+			xyzspec = labspec.Value.ToXYZ();
+			rgbspec = xyzspec.Value.ToRGB();
+		}
+		else if(spec is XYZ)
+		{
+			xyzspec = (XYZ) spec;
+			labspec = new LAB(xyzspec.Value);
+			lchspec = new LCH(labspec.Value);
+			rgbspec = xyzspec.Value.ToRGB();
+		}
+		else if(spec is RGB)
+		{
+			rgbspec = (RGB) spec;
+			xyzspec = new XYZ(rgbspec.Value);
+			labspec = new LAB(xyzspec.Value);
+			lchspec = new LCH(labspec.Value);
+		}
 		StringBuilder buf = new StringBuilder();
 		buf.Append(TAB);
 		buf.Append(c.rgb.ToHexString());
@@ -1397,25 +1456,86 @@ using System.Reflection;
 		buf.Append(c.rgb.ToDecimalString());
 		buf.Append(NL);
 		buf.Append(TAB);
-		buf.Append(c.rgb.ToPercentageString());
-		buf.Append(NL);
-		buf.Append(TAB);
 		buf.Append(c.hsl.ToString());
 		buf.Append(NL);
 		buf.Append(TAB);
 		buf.Append(c.hwb.ToString());
 		buf.Append(NL);
 		buf.Append(TAB);
-		buf.Append("D65: ");
-		buf.Append(c.xyz.ToString());
-		buf.Append(", D50: ");
-		buf.Append(c.xyz.ToD50().ToString());
+		if(rgbspec.HasValue)
+		{
+			buf.Append(pad(c.rgb.ToPercentageString()));
+			double[] d = c.rgb % rgbspec.Value;
+			double D = c.rgb - rgbspec.Value;
+			buf.Append(TAB);
+			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
+				"[R{0:\"+\"0.000;\"-\"0.###}%,G{1:\"+\"0.###;\"-\"0.###}%,B{2:\"+\"0.###;\"-\"0.###}%]",
+				d[0] * 100, d[1] * 100, d[2] * 100
+			)));
+			buf.Append(TAB);
+			buf.Append(string.Format(CultureInfo.InvariantCulture,
+				"±{0:0.###}",
+				D
+			));
+		}
+		else
+		{
+			buf.Append(c.rgb.ToPercentageString());
+		}
 		buf.Append(NL);
 		buf.Append(TAB);
-		buf.Append(c.lab.ToString());
+		if(xyzspec.HasValue)
+		{
+			buf.Append(pad(c.xyz.ToString()));
+			buf.Append(TAB);
+			double[] d = c.xyz % xyzspec.Value;
+			buf.Append(string.Format(CultureInfo.InvariantCulture,
+				"[X{0:\"+\"0.000;\"-\"0.###},Y{1:\"+\"0.###;\"-\"0.###},Z{2:\"+\"0.###;\"-\"0.###}]",
+				d[0], d[1], d[2]
+			));
+		}
+		else
+		{
+			buf.Append(c.xyz.ToString());
+		}
 		buf.Append(NL);
 		buf.Append(TAB);
-		buf.Append(c.lch.ToString());
+		if(labspec.HasValue)
+		{
+			buf.Append(pad(c.lab.ToString()));
+			double[] d = c.lab % labspec.Value;
+			double D = c.lab - labspec.Value;
+			buf.Append(TAB);
+			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
+				"[L*{0:\"+\"0.000;\"-\"0.###},a*{1:\"+\"0.###;\"-\"0.###},b*{2:\"+\"0.###;\"-\"0.###}]",
+				d[0], d[1], d[2]
+			)));
+			buf.Append(TAB);
+			buf.Append(string.Format(CultureInfo.InvariantCulture,
+				"±{0:0.###}",
+				D
+			));
+		}
+		else
+		{
+			buf.Append(c.lab.ToString());
+		}
+		buf.Append(NL);
+		buf.Append(TAB);
+		if(lchspec.HasValue)
+		{
+			buf.Append(pad(c.lch.ToString()));
+			buf.Append(TAB);
+			double[] d = c.lch % lchspec.Value;
+			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
+				"[L*{0:\"+\"0.000;\"-\"0.###},C*{1:\"+\"0.###;\"-\"0.###},h°{2:\"+\"0.###;\"-\"0.###}]",
+				d[0], d[1], d[2]
+			)));
+		}
+		else
+		{
+			buf.Append(c.lch.ToString());
+		}
 		if(!string.IsNullOrWhiteSpace(c.name))
 		{
 			buf.Append(NL);
@@ -1426,23 +1546,30 @@ using System.Reflection;
 		{
 			buf.Append(NL);
 			buf.Append(TAB);
-			buf.Append("Nearest standard colour: ");
 			Colour a = c.Approximate();
 			double[] d = a.lch % c.lch;
 			double D = a.lab - c.lab;
-			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"{0} ({1}) [L{2:\"+\"0.000;\"-\"0.000},C{3:\"+\"0.000;\"-\"0.000},H{4:\"+\"0.000;\"-\"0.000}] Lab±{5:0.000}",
-				a.rgb.ToString(),
+			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
+				"≅ {0} ({1})",
 				a.keyword,
-				d[0], d[1], d[2],
+				a.rgb.ToString()
+			)));
+			buf.Append(TAB);
+			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
+				"[L*{0:\"+\"0.###;\"-\"0.###},C*{1:\"+\"0.###;\"-\"0.###},h°{2:\"+\"0.###;\"-\"0.###}]",
+				d[0], d[1], d[2]
+			)));
+			buf.Append(TAB);
+			buf.Append(string.Format(CultureInfo.InvariantCulture,
+				"±{0:0.###}",
 				D
 			));
 		}
 		return buf.ToString();
 	}
-	static void print(string a, Colour c, string TAB = "\t", string NL1 = "\n", string NL2 = "\n")
+	static void print(string a, Colour c, object spec, string TAB = "    ", string NL1 = "\n", string NL2 = "\n")
 	{
-		Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}:{1}{2}", a, NL1, format(c, TAB, NL2)));
+		Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{0}:{1}{2}", a, NL1, format(c, spec, TAB, NL2)));
 	}
 	static readonly string[] Unclipped = new string[]{ "/unclip", "/unclipped", "--unclip", "--unclipped", "-u", "/u" };
 	static readonly string[] Fixed = new string[]{ "/fix", "/fixed", "--fix", "--fixed", "-f", "/f" };
@@ -1517,12 +1644,14 @@ using System.Reflection;
             {
 				try
 				{
-	                Colour c = rectify(new Colour(a, null), clip, fix);
-					print(a, c);
+					Colour cs = new Colour(a, null);
+	                Colour c = rectify(cs, clip, fix);
+					print(a, c, cs.rgb.IsValid ? null : cs.spec);
 	                bool pc = true;
 	                if (op == '+')
 	                {
-	                    current = rectify(Colour.Interpolate(current.Value, c, q), clip, fix);
+						cs = Colour.Interpolate(current.Value, c, q);
+	                    current = rectify(cs, clip, fix);
 	                    q = double.NaN;
 	                    op = '\0';
 	                }
@@ -1533,7 +1662,7 @@ using System.Reflection;
 	                }
 	                if (pc)
 	                {
-						print(pop, current.Value);
+						print(pop, current.Value, cs.rgb.IsValid ? null : cs.spec);
 	                }
 				}
 				catch(Exception e)
