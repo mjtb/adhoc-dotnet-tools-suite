@@ -312,51 +312,53 @@ using System.Reflection;
 				}
 				LCH origch = new LCH(this);
 				LAB origab = origch.ToLAB();
-				for(int g = 0; g <= 20; ++g)
+				RGB clippr = Clip();
+				double clippd = origab - new LAB(clippr);
+				LCH Q = origch;
+				RGB R = clippr;
+				double D = clippd;
+				bool B = false;
+				for(int t = 0; t <= 15; ++t)
 				{
-					int K = g <= 3 ? 5 : (g <= 5 ? 8 : (g <= 8 ? 13 : (g <= 13 ? 21 : 34)));
-					LCH Q = origch;
-					RGB R = this;
-					double D = double.PositiveInfinity;
-					bool B = false;
-					for(int k = 0; k <= K; ++k)
+					for(int u = 0; u <= 20; ++u)
 					{
-						for(int u = 0; u <= k; ++u)
+						for(int v = 0; v <= 40; ++v)
 						{
-							for(int v = 0; v <= k; ++v)
+							for(int x = 0; x <= 7; ++x)
 							{
-								for(int x = 0; x <= 7; ++x)
+								LCH q = new LCH();
+								q.c = origch.c + v * ((x & 1) == 0 ? 1 : -1);
+								q.l = origch.l + u * (((x >> 1) & 1) == 0 ? 1 : -1);
+								q.h = origch.h + t * (((x >> 2) & 1) == 0 ? 1 : -1);
+								while(q.h < 0)
 								{
-									LCH q = new LCH();
-									q.c = origch.c + v * ((x & 1) == 0 ? 1 : -1);
-									q.l = origch.l + u * (((x >> 1) & 1) == 0 ? 1 : -1);
-									q.h = origch.h + g * (((x >> 2) & 1) == 0 ? 1 : -1);
-									RGB rx = q.ToRGB();
-									if(rx.IsValid)
+									q.h += 360;
+								}
+								while(q.h > 360)
+								{
+									q.h -= 360;
+								}
+								RGB rx = q.ToRGB();
+								if(rx.IsValid)
+								{
+									double d = origab - q.ToLAB();
+									if(d < D)
 									{
-										double d = origab - q.ToLAB();
-										if(d < D)
-										{
-											B = true;
-											D = d;
-											Q = q;
-											R = rx;
-										}
+										B = true;
+										D = d;
+										Q = q;
+										R = rx;
 									}
 								}
 							}
 						}
 					}
-					if(B)
-					{
-						return R;
-					}
 				}
-				RGB rv = new RGB();
-				rv.r = Math.Min(1, Math.Max(0, r));
-				rv.g = Math.Min(1, Math.Max(0, g));
-				rv.b = Math.Min(1, Math.Max(0, b));
-				return rv;
+				if(B)
+				{
+					return R;
+				}
+				return clippr;
 			}
 
 			public RGB Interpolate(RGB q, double alpha)
