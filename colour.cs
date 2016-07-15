@@ -159,6 +159,7 @@ using System.Reflection;
 
 		public struct RGB
 		{
+			public const double R_MIN = 0, R_MAX = 1, G_MIN = 0, G_MAX = 1, B_MIN = 0, B_MAX = 1;
 			private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
 	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<g>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)"),
 				HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
@@ -391,6 +392,7 @@ using System.Reflection;
 
 		public struct HSL
 		{
+			public const double H_MIN = 0, H_MAX = 360, S_MIN = 0, S_MAX = 1, L_MIN = 0, L_MAX = 1;
 			private static readonly Regex RE = new Regex("hsl\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<s>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<l>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double s;
@@ -550,6 +552,7 @@ using System.Reflection;
 
 		public struct HWB
 		{
+			public const double H_MIN = 0, H_MAX = 360, W_MIN = 0, W_MAX = 1, B_MIN = 0, B_MAX = 1;
 			private static readonly Regex RE = new Regex("hwb\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<w>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double w;
@@ -688,6 +691,7 @@ using System.Reflection;
 
 		public struct XYZ
 		{
+			public const double X_MIN = 0, X_MAX = 1.09850, Y_MIN = 0, Y_MAX = 1, Z_MIN = 0, Z_MAX = 1.22638;
 			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<y>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<z>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			private static readonly double[,] M = new double[3,3] {
 				{ 0.4124564, 0.3575761, 0.1804375 },
@@ -815,6 +819,7 @@ using System.Reflection;
 		}
 		public struct LAB
 		{
+			public const double L_MIN = 0, L_MAX = 100, A_MIN = -160, A_MAX = 160, B_MIN = -160, B_MAX = 160;
 			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<a>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<b>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			public double l;
 			public double a;
@@ -944,6 +949,7 @@ using System.Reflection;
 
 		public struct LCH
 		{
+			public const double L_MIN = 0, L_MAX = 100, C_MIN = 0, C_MAX = 230, H_MIN = 0, H_MAX = 360;
 			private static readonly Regex RE = new Regex("lch\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<c>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<h>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*\\)");
 			public double l;
 			public double c;
