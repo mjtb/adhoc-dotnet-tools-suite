@@ -923,7 +923,7 @@ using System.Reflection;
 			}
 			public static double operator-(LAB a, LAB b)
 			{
-				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(a.a - b.a, 2) + Math.Pow(a.b - b.b, 2));
+				return ΔE00(a, new LCH(a), b, new LCH(b));
 			}
 
 			public static double[] operator%(LAB a, LAB b)
@@ -1025,11 +1025,7 @@ using System.Reflection;
 			}
 			public static double operator-(LCH a, LCH b)
 			{
-				double ax = a.c * Math.Cos(a.h * Math.PI / 180.0);
-				double ay = a.c * Math.Sin(a.h * Math.PI / 180.0);
-				double bx = b.c * Math.Cos(b.h * Math.PI / 180.0);
-				double by = b.c * Math.Sin(b.h * Math.PI / 180.0);
-				return Math.Sqrt(Math.Pow(a.l - b.l, 2) + Math.Pow(ax - bx, 2) + Math.Pow(ay - by, 2));
+				return ΔE00(a.ToLAB(), a, b.ToLAB(), b);
 			}
 			public static double[] operator%(LCH a, LCH b)
 			{
@@ -1488,9 +1484,10 @@ using System.Reflection;
 			if(field is LAB)
 			{
 				LAB lab = (LAB) field;
+				LCH lch = new LCH(lab);
 				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = lab - set[i].lab;
+					double d = ΔE00(lab, lch, set[i].lab, set[i].lch);
 					if(d < D)
 					{
 						D = d;
@@ -1514,9 +1511,10 @@ using System.Reflection;
 			else if(field is LCH)
 			{
 				LCH lch = (LCH) field;
+				LAB lab = lch.ToLAB();
 				for(int i = 0; i < set.Length; ++i)
 				{
-					double d = lch - set[i].lch;
+					double d = ΔE00(lab, lch, set[i].lab, set[i].lch);
 					if(d < D)
 					{
 						D = d;
@@ -1565,21 +1563,23 @@ using System.Reflection;
 			}
 			return I;
 		}
-//		delta U+394
-//		prime U+2B9
-		public static double operator-(Colour one, Colour two)
+		public static double operator-(Colour a, Colour b)
 		{
-			double ΔLʹ = two.lch.l - one.lch.l;
-			double L_ = (one.lch.l + two.lch.l) / 2;
-			double C_ = (one.lch.c + two.lch.c) / 2;
+			return ΔE00(a.lab, a.lch, b.lab, b.lch);
+		}
+		public static double ΔE00(LAB lab1, LCH lch1, LAB lab2, LCH lch2)
+		{
+			double ΔLʹ = lch2.l - lch1.l;
+			double L_ = (lch1.l + lch2.l) / 2;
+			double C_ = (lch1.c + lch2.c) / 2;
 			double f = 1 - Math.Sqrt(Math.Pow(C_, 7) / (Math.Pow(C_, 7) + Math.Pow(25, 7)));
-			double a1ʹ = one.lab.a + one.lab.a / 2 * f;
-			double a2ʹ = two.lab.a + two.lab.a / 2 * f;
-			double C1ʹ = Math.Sqrt(Math.Pow(a1ʹ, 2) + Math.Pow(one.lab.b, 2));
-			double C2ʹ = Math.Sqrt(Math.Pow(a2ʹ, 2) + Math.Pow(two.lab.b, 2));
+			double a1ʹ = lab1.a + lab1.a / 2 * f;
+			double a2ʹ = lab2.a + lab2.a / 2 * f;
+			double C1ʹ = Math.Sqrt(Math.Pow(a1ʹ, 2) + Math.Pow(lab1.b, 2));
+			double C2ʹ = Math.Sqrt(Math.Pow(a2ʹ, 2) + Math.Pow(lab2.b, 2));
 			double ΔCʹ = C2ʹ - C1ʹ;
 			double C_ʹ = (C1ʹ + C2ʹ) / 2;
-			double h1ʹ = Math.Atan2(one.lab.b, a1ʹ) * 180 / Math.PI;
+			double h1ʹ = Math.Atan2(lab1.b, a1ʹ) * 180 / Math.PI;
 			while(h1ʹ < 0)
 			{
 				h1ʹ += 360;
@@ -1588,7 +1588,7 @@ using System.Reflection;
 			{
 				h1ʹ -= 360;
 			}
-			double h2ʹ = Math.Atan2(two.lab.b, a2ʹ) * 180 / Math.PI;
+			double h2ʹ = Math.Atan2(lab2.b, a2ʹ) * 180 / Math.PI;
 			while(h2ʹ < 0)
 			{
 				h2ʹ += 360;
@@ -1638,7 +1638,7 @@ using System.Reflection;
 			double SC = 1 + 0.045 * C_ʹ;
 			double SH = 1 + 0.015 * C_ʹ * T;
 			double RT = -2 * Math.Sqrt(Math.Pow(C_ʹ, 7) / (Math.Pow(C_ʹ, 7) + Math.Pow(25, 7))) * Math.Sin(60 * Math.Exp(-1 * Math.Pow((H_ʹ - 275) / 25, 2)) / 180 * Math.PI);
-			double ΔE00 = Math.Sqrt( Math.Pow(ΔLʹ / SL, 2) + Math.Pow(ΔCʹ / SC, 2) + Math.Pow(ΔHʹ / SH, 2) + RT * (ΔCʹ / SC) * (ΔHʹ / SH));
+			double ΔE00 = Math.Sqrt(Math.Pow(ΔLʹ / SL, 2) + Math.Pow(ΔCʹ / SC, 2) + Math.Pow(ΔHʹ / SH, 2) + RT * (ΔCʹ / SC) * (ΔHʹ / SH));
 			return ΔE00;
 		}
 
@@ -1752,7 +1752,7 @@ using System.Reflection;
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"±{0}",
+				"ΔE*₀₀±{0}",
 				ps(D, 3)
 			));
 		}
@@ -1801,7 +1801,7 @@ using System.Reflection;
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
-				"±{0}",
+				"ΔE*₀₀±{0}",
 				ps(D, 3)
 			));
 		}
