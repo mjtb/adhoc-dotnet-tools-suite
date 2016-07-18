@@ -159,7 +159,7 @@ using System.Reflection;
 
 		public struct RGB
 		{
-			public const double R_MIN = 0, R_MAX = 1, G_MIN = 0, G_MAX = 1, B_MIN = 0, B_MAX = 1;
+			public const double R_MIN = 0, R_MAX = 1, G_MIN = 0, G_MAX = 1, B_MIN = 0, B_MAX = 1, R_PRECISION = 0.0025, G_PRECISION = 0.0025, B_PRECISION = 0.0025;
 			private static readonly Regex HEX6 = new Regex("#(?<r>[0-9A-Fa-f]{2})(?<g>[0-9A-Fa-f]{2})(?<b>[0-9A-Fa-f]{2})"),
 	            DEC = new Regex("rgb\\(\\s*(?<r>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<g>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)"),
 				HEX3 = new Regex("#(?<r>[0-9A-Fa-f])(?<g>[0-9A-Fa-f])(?<b>[0-9A-Fa-f])");
@@ -250,7 +250,7 @@ using System.Reflection;
 
 			public string ToPercentageString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "rgb({0}%,{1}%,{2}%)", ps(r, 2, 100), ps(g, 2, 100), ps(b, 2, 100));
+				return string.Format(CultureInfo.InvariantCulture, "rgb({0}%,{1}%,{2}%)", ps(r, digits(R_PRECISION), 100), ps(g, digits(G_PRECISION), 100), ps(b, digits(B_PRECISION), 100));
 			}
 
 			public override string ToString()
@@ -392,7 +392,7 @@ using System.Reflection;
 
 		public struct HSL
 		{
-			public const double H_MIN = 0, H_MAX = 360, S_MIN = 0, S_MAX = 1, L_MIN = 0, L_MAX = 1;
+			public const double H_MIN = 0, H_MAX = 360, S_MIN = 0, S_MAX = 1, L_MIN = 0, L_MAX = 1, H_PRECISION = 0.00025, S_PRECISION = 0.001, L_PRECISION = 0.001;
 			private static readonly Regex RE = new Regex("hsl\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<s>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<l>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double s;
@@ -457,11 +457,11 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "hsl({0},{1}%,{2}%)", ps(h, 0), ps(s, 0, 100), ps(l, 0, 100));
+				return string.Format(CultureInfo.InvariantCulture, "hsl({0},{1}%,{2}%)", ps(h, digits(H_PRECISION), 360), ps(s, digits(S_PRECISION * 100), 100), ps(l, digits(L_PRECISION * 100), 100));
 			}
 			public override int GetHashCode()
 			{
-				return (pi(h, 360) << 16) | (pi(s, 100) << 8) | pi(l, 100);
+				return (pi(h, H_MAX, H_MIN, 1023) << 20) | (pi(s, S_MAX, S_MIN, 1023) << 10) | pi(l, L_MAX, L_MIN, 1023);
 			}
 			public override bool Equals(object o)
 			{
@@ -552,7 +552,7 @@ using System.Reflection;
 
 		public struct HWB
 		{
-			public const double H_MIN = 0, H_MAX = 360, W_MIN = 0, W_MAX = 1, B_MIN = 0, B_MAX = 1;
+			public const double H_MIN = 0, H_MAX = 360, W_MIN = 0, W_MAX = 1, B_MIN = 0, B_MAX = 1, H_PRECISION = 0.00025, W_PRECISION = 0.0025, B_PRECISION = 0.0025;
 			private static readonly Regex RE = new Regex("hwb\\(\\s*(?<h>(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*,\\s*(?<w>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*,\\s*(?<b>(0|[1-9]\\d{0,2})(\\.\\d+)?%?|\\*)\\s*\\)");
 			public double h;
 			public double w;
@@ -612,11 +612,11 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "hwb({0},{1}%,{2}%)", ps(h, 0), ps(w, 0, 100), ps(b, 0, 100));
+				return string.Format(CultureInfo.InvariantCulture, "hwb({0},{1}%,{2}%)", ps(h, digits(H_PRECISION), 360), ps(w, digits(W_PRECISION * 100), 100), ps(b, digits(B_PRECISION * 100), 100));
 			}
 			public override int GetHashCode()
 			{
-				return (pi(h, 360) << 16) | (pi(w, 100) << 8) | pi(b, 100);
+				return (pi(h, H_MAX, H_MIN, 1023) << 20) | (pi(w, W_MAX, W_MIN, 1023) << 10) | pi(b, B_MAX, B_MIN, 1023);
 			}
 			public override bool Equals(object o)
 			{
@@ -691,7 +691,7 @@ using System.Reflection;
 
 		public struct XYZ
 		{
-			public const double X_MIN = 0, X_MAX = 1.09850, Y_MIN = 0, Y_MAX = 1, Z_MIN = 0, Z_MAX = 1.22638;
+			public const double X_MIN = 0, X_MAX = 0.95047, Y_MIN = 0, Y_MAX = 1, Z_MIN = 0, Z_MAX = 1.08883, X_PRECISION = 0.00005, Y_PRECISION = 0.00005, Z_PRECISION = 0.00005;
 			private static readonly Regex RE = new Regex("xyz\\(\\s*(?<x>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<y>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*,\\s*(?<z>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			private static readonly double[,] M = new double[3,3] {
 				{ 0.4124564, 0.3575761, 0.1804375 },
@@ -732,7 +732,7 @@ using System.Reflection;
 			}
 			public override int GetHashCode()
 			{
-				return (pi(x,1023) << 20) | (pi(y,1023) << 10) | pi(z,1023);
+				return (pi(x,X_MAX,X_MIN,1023) << 20) | (pi(y,Y_MAX,Y_MIN,1023) << 10) | pi(z,Z_MAX,Z_MIN,1023);
 			}
 			public override bool Equals(object o)
 			{
@@ -756,7 +756,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "xyz({0},{1},{2})", ps(x, 6), ps(y, 6), ps(z, 6));
+				return string.Format(CultureInfo.InvariantCulture, "xyz({0},{1},{2})", ps(x, digits(X_PRECISION)), ps(y, digits(Y_PRECISION)), ps(z, digits(Z_PRECISION)));
 			}
 			public RGB ToRGB()
 			{
@@ -815,11 +815,10 @@ using System.Reflection;
 				rv.z = alpha * z + beta * q.z;
 				return rv;
 			}
-
 		}
 		public struct LAB
 		{
-			public const double L_MIN = 0, L_MAX = 100, A_MIN = -160, A_MAX = 160, B_MIN = -160, B_MAX = 160;
+			public const double L_MIN = 0, L_MAX = 100, A_MIN = -80, A_MAX = 94, B_MIN = -113, B_MAX = 94, L_PRECISION = 0.01, A_PRECISION = 0.01, B_PRECISION = 0.01;
 			private static readonly Regex RE = new Regex("lab\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<a>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<b>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s*\\)");
 			public double l;
 			public double a;
@@ -868,11 +867,11 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lab({0} {1} {2})", ps(l, 2), ps(a, 2), ps(b, 2));
+				return string.Format(CultureInfo.InvariantCulture, "lab({0} {1} {2})", ps(l, digits(L_PRECISION)), ps(a, digits(A_PRECISION)), ps(b, digits(B_PRECISION)));
 			}
 			public override int GetHashCode()
 			{
-				return (pi(l, 100, 0, 1023) << 20) | (pi(a, 160, -160, 1023) << 10) | pi(b, 160, -160, 1023);
+				return (pi(l, L_MAX, L_MIN, 1023) << 20) | (pi(a, A_MAX, A_MIN, 1023) << 10) | pi(b, B_MAX, B_MIN, 1023);
 			}
 			public override bool Equals(object o)
 			{
@@ -949,7 +948,7 @@ using System.Reflection;
 
 		public struct LCH
 		{
-			public const double L_MIN = 0, L_MAX = 100, C_MIN = 0, C_MAX = 230, H_MIN = 0, H_MAX = 360;
+			public const double L_MIN = 0, L_MAX = 100, C_MIN = 0, C_MAX = 132, H_MIN = 0, H_MAX = 360, L_PRECISION = 0.01, C_PRECISION = 0.01, H_PRECISION = 0.01;
 			private static readonly Regex RE = new Regex("lch\\(\\s*(?<l>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<c>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?|\\*)\\s+(?<h>(-|\\+)?(0|[1-9]\\d{0,2})(\\.\\d+)?°?|\\*)\\s*\\)");
 			public double l;
 			public double c;
@@ -989,7 +988,7 @@ using System.Reflection;
 			}
 			public override int GetHashCode()
 			{
-				return (pi(l, 100, 0, 1023) << 20) | (pi(c, 230, 0, 1023) << 10) | pi(h, 360, 0, 1023);
+				return (pi(l, L_MAX, L_MIN, 1023) << 20) | (pi(c, C_MAX, C_MIN, 1023) << 10) | pi(h, H_MAX, H_MIN, 1023);
 			}
 			public static bool operator==(LCH a, LCH b)
 			{
@@ -1013,7 +1012,7 @@ using System.Reflection;
 			}
 			public override string ToString()
 			{
-				return string.Format(CultureInfo.InvariantCulture, "lch({0} {1} {2})", ps(l, 2), ps(c, 2), ps(h, 2));
+				return string.Format(CultureInfo.InvariantCulture, "lch({0} {1} {2})", ps(l, digits(L_PRECISION)), ps(c, digits(C_PRECISION)), ps(h, digits(H_PRECISION)));
 			}
 			public LAB ToLAB()
 			{
@@ -1140,7 +1139,10 @@ using System.Reflection;
                 return double.Parse(i) / q;
             }
         }
-
+		private static int digits(double precision)
+		{
+			return (int)Math.Ceiling(Math.Abs(Math.Log(precision, 10)));
+		}
 		private static string ps(double d, int digits, double coef = 1, bool plus = false)
 		{
 			if(double.IsNaN(d))
@@ -1563,6 +1565,82 @@ using System.Reflection;
 			}
 			return I;
 		}
+//		delta U+394
+//		prime U+2B9
+		public static double operator-(Colour one, Colour two)
+		{
+			double ΔLʹ = two.lch.l - one.lch.l;
+			double L_ = (one.lch.l + two.lch.l) / 2;
+			double C_ = (one.lch.c + two.lch.c) / 2;
+			double f = 1 - Math.Sqrt(Math.Pow(C_, 7) / (Math.Pow(C_, 7) + Math.Pow(25, 7)));
+			double a1ʹ = one.lab.a + one.lab.a / 2 * f;
+			double a2ʹ = two.lab.a + two.lab.a / 2 * f;
+			double C1ʹ = Math.Sqrt(Math.Pow(a1ʹ, 2) + Math.Pow(one.lab.b, 2));
+			double C2ʹ = Math.Sqrt(Math.Pow(a2ʹ, 2) + Math.Pow(two.lab.b, 2));
+			double ΔCʹ = C2ʹ - C1ʹ;
+			double C_ʹ = (C1ʹ + C2ʹ) / 2;
+			double h1ʹ = Math.Atan2(one.lab.b, a1ʹ) * 180 / Math.PI;
+			while(h1ʹ < 0)
+			{
+				h1ʹ += 360;
+			}
+			while(h1ʹ >= 360)
+			{
+				h1ʹ -= 360;
+			}
+			double h2ʹ = Math.Atan2(two.lab.b, a2ʹ) * 180 / Math.PI;
+			while(h2ʹ < 0)
+			{
+				h2ʹ += 360;
+			}
+			while(h2ʹ >= 360)
+			{
+				h2ʹ -= 360;
+			}
+			f = Math.Abs(h1ʹ - h2ʹ);
+			double Δhʹ;
+			if(C1ʹ == 0 || C2ʹ == 0)
+			{
+				Δhʹ = 0;
+			}
+			else if(f <= 180)
+			{
+				Δhʹ = h2ʹ - h1ʹ;
+			}
+			else if(h2ʹ <= h1ʹ)
+			{
+				Δhʹ = h2ʹ - h1ʹ + 360;
+			}
+			else
+			{
+				Δhʹ = h2ʹ - h1ʹ - 360;
+			}
+			double ΔHʹ = 2 * Math.Sqrt(C1ʹ * C2ʹ) * Math.Sin(Δhʹ * Math.PI / 180 / 2);
+			double H_ʹ;
+			if(C1ʹ == 0 || C2ʹ == 0)
+			{
+				H_ʹ = h1ʹ + h2ʹ;
+			}
+			else if(f <= 180)
+			{
+				H_ʹ = (h1ʹ + h2ʹ) / 2;
+			}
+			else if(h1ʹ + h2ʹ < 360)
+			{
+				H_ʹ = (h1ʹ + h2ʹ + 360) / 2;
+			}
+			else
+			{
+				H_ʹ = (h1ʹ + h2ʹ - 360) / 2;
+			}
+			double T = 1 - 0.17 * Math.Cos((H_ʹ - 30) / 180 * Math.PI) + 0.24 * Math.Cos((2 * H_ʹ) / 180 * Math.PI) + 0.32 * Math.Cos((3 * H_ʹ + 6) / 180 * Math.PI) - 0.20 * Math.Cos((4 * H_ʹ -63) / 180 * Math.PI);
+			double SL = 1 + ((0.015 * Math.Pow(L_ - 50, 2)) / Math.Sqrt(20 + Math.Pow(L_ - 50, 2)));
+			double SC = 1 + 0.045 * C_ʹ;
+			double SH = 1 + 0.015 * C_ʹ * T;
+			double RT = -2 * Math.Sqrt(Math.Pow(C_ʹ, 7) / (Math.Pow(C_ʹ, 7) + Math.Pow(25, 7))) * Math.Sin(60 * Math.Exp(-1 * Math.Pow((H_ʹ - 275) / 25, 2)) / 180 * Math.PI);
+			double ΔE00 = Math.Sqrt( Math.Pow(ΔLʹ / SL, 2) + Math.Pow(ΔCʹ / SC, 2) + Math.Pow(ΔHʹ / SH, 2) + RT * (ΔCʹ / SC) * (ΔHʹ / SH));
+			return ΔE00;
+		}
 
 #if COLOUR_INCLUDE_MAIN
 	static string pad(string s, int width = 36)
@@ -1632,7 +1710,7 @@ using System.Reflection;
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
 				"[R{0}%,G{1}%,B{2}%]",
-				ps(d[0], 3, 100, true), ps(d[1], 3, 100, true), ps(d[2], 3, 100, true)
+				ps(d[0], digits(RGB.R_PRECISION * 100) + 1, 100, true), ps(d[1], digits(RGB.G_PRECISION * 100) + 1, 100, true), ps(d[2], digits(RGB.B_PRECISION * 100) + 1, 100, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
@@ -1653,7 +1731,7 @@ using System.Reflection;
 			double[] d = c.xyz % xyzspec.Value;
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
 				"[X{0},Y{1},Z{2}]",
-				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
+				ps(d[0], digits(XYZ.X_PRECISION) + 1, 1, true), ps(d[1], digits(XYZ.Y_PRECISION) + 1, 1, true), ps(d[2], digits(XYZ.Y_PRECISION) + 1, 1, true)
 			));
 		}
 		else
@@ -1670,7 +1748,7 @@ using System.Reflection;
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
 				"[L*{0},a*{1},b*{2}]",
-				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
+				ps(d[0], digits(LAB.L_PRECISION) + 1, 1, true), ps(d[1], digits(LAB.A_PRECISION) + 1, 1, true), ps(d[2], digits(LAB.B_PRECISION) + 1, 1, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
@@ -1691,7 +1769,7 @@ using System.Reflection;
 			double[] d = c.lch % lchspec.Value;
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
 				"[L*{0},C*{1},h°{2}]",
-				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
+				ps(d[0], digits(LCH.L_PRECISION) + 1, 1, true), ps(d[1], digits(LCH.C_PRECISION) + 1, 1, true), ps(d[2], digits(LCH.H_PRECISION) + 1, 1, true)
 			)));
 		}
 		else
@@ -1719,7 +1797,7 @@ using System.Reflection;
 			buf.Append(TAB);
 			buf.Append(pad(string.Format(CultureInfo.InvariantCulture,
 				"[L*{0},C*{1},h°{2}]",
-				ps(d[0], 3, 1, true), ps(d[1], 3, 1, true), ps(d[2], 3, 1, true)
+				ps(d[0], digits(LCH.L_PRECISION) + 1, 1, true), ps(d[1], digits(LCH.C_PRECISION) + 1, 1, true), ps(d[2], digits(LCH.H_PRECISION) + 1, 1, true)
 			)));
 			buf.Append(TAB);
 			buf.Append(string.Format(CultureInfo.InvariantCulture,
