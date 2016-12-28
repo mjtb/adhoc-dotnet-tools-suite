@@ -13,6 +13,15 @@ using System.Reflection;
 
 class jvf {
 
+static bool DebugMode = false;
+static void DebugPrint(string msg) {
+	if(DebugMode) {
+		Console.WriteLine(msg);
+	} else {
+		Debug.WriteLine(msg);
+	}
+}
+
 static bool ValidateJFIF(Stream fs) {
 	byte[] buf = new byte[2];
 	bool eoi = false;
@@ -40,7 +49,7 @@ static bool ValidateJFIF(Stream fs) {
 				} else if(marker >= 0xFF02 && marker <= 0xFFBF) {
 					name = "RES";
 				} else {
-					Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: bad marker: 0x{1:X4}", offset, marker));
+					DebugPrint(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: bad marker: 0x{1:X4}", offset, marker));
 					return false;
 				}
 				break;
@@ -104,6 +113,7 @@ static bool ValidateJFIF(Stream fs) {
 				name = "EOI*";
 				eoi = true;
 				sized = false;
+				loop = false;
 				break;
 			case 0xFFDA:
 				name = "SOS";
@@ -134,14 +144,14 @@ static bool ValidateJFIF(Stream fs) {
 					loop = false;
 				} else {
 					int length = IPAddress.NetworkToHostOrder(BitConverter.ToInt16(buf, 0)) & 0xFFFF;
-					Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: segment marker: 0x{1:X4} ({2}), length: {3} bytes", offset, marker, name, length));
+					DebugPrint(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: segment marker: 0x{1:X4} ({2}), length: {3} bytes", offset, marker, name, length));
 					if(length > 2) {
 						fs.Seek(length - 2, SeekOrigin.Current);
 					}
 					offset += 2 + length;
 				}
 			} else {
-				Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: marker: 0x{1:X4} ({2})", offset, marker, name));
+				DebugPrint(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: marker: 0x{1:X4} ({2})", offset, marker, name));
 				offset += 2;
 			}
 			while(scan) {
@@ -149,7 +159,7 @@ static bool ValidateJFIF(Stream fs) {
 				if(b == 0xFF) {
 					b = fs.ReadByte();
 					if(b > 0) {
-						Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: end of scan reached", offset));
+						DebugPrint(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: end of scan reached", offset));
 						fs.Seek(-2, SeekOrigin.Current);
 						scan = false;
 					} else if(b == 0) {
@@ -166,7 +176,7 @@ static bool ValidateJFIF(Stream fs) {
 		}
 	}
 	if(!eoi) {
-		Debug.WriteLine(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: unexpected end of file reached", offset));
+		DebugPrint(string.Format(CultureInfo.InvariantCulture, "at {0:X8}: unexpected end of file reached", offset));
 	}
 	return eoi;
 }
@@ -222,6 +232,8 @@ public static int Main(string[] args) {
 	foreach(string a in args) {
 		if(matches(a, "--help", "/help", "-h", "/?")) {
 			syntax = true;
+		} else if(matches(a, "--debug", "/debug", "-d", "/d")) {
+			DebugMode = true;
 		} else {
 			bool ok = ValidateJFIF(Path.GetFullPath(a), Directory.Exists(a));
 			notok = notok || !ok;
@@ -234,7 +246,7 @@ public static int Main(string[] args) {
 		Console.WriteLine("Exit codes:");
 		Console.WriteLine(" 0 = all files OK");
 		Console.WriteLine(" 1 = at least one file is NOT OK");
-		Console.WriteLine("Syntax: jvf jpg|dir...");
+		Console.WriteLine("Syntax: jvf [--debug] jpg|dir...");
 	}
 	return notok ? 1 : 0;
 }
