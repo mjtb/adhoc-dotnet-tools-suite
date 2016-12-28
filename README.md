@@ -20,6 +20,7 @@ The tools include:
 *	`respeel` — extract .ico and other resources from .dll and .exe files
 *	`sudo` — runs a program in a UAC-elevated command prompt window
 *	`wrap` — hard-wrap a text file
+*	`jvf` — validates JFIF \(JPEG\) file integrity
 
 **THESE TOOLS COME WITH NO WARRANTY, EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.**
 
