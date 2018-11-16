@@ -70,6 +70,27 @@ static string hex(byte[] b) {
 	}
 	return buf.ToString();
 }
+static string cpp(byte[] b) {
+	StringBuilder buf = new StringBuilder();
+	int col = 0;
+	for(int i = 0; i < b.Length; i++) {
+		if(col > 0)
+		{
+			buf.Append(", ");
+		}
+		buf.AppendFormat(string.Format("0x{0:X2}", b[i]));
+		++col;
+		if(col == 16)
+		{
+			if(i < (b.Length - 1))
+			{
+				buf.Append(", \\\r\n");
+			}
+			col = 0;
+		}
+	}
+	return buf.ToString();
+}
 static byte[] unhex(string s) {
 	MemoryStream ms = new MemoryStream();
 	int high = 0;
@@ -237,6 +258,8 @@ if((args.Length==1 || args.Length==2) && args[0]=="base64t") {
 	}
 } else if((args.Length==1 || args.Length==2) && args[0]=="hex") {
 	Console.WriteLine(hex(getib(args)));
+} else if((args.Length==1 || args.Length==2) && args[0]=="cpp") {
+	Console.WriteLine(cpp(getib(args)));
 } else if((args.Length==1 || args.Length==2) && args[0]=="un-hex") {
 	byte[] temp = unhex(getit(args));
 	Stream str = Console.OpenStandardOutput();
@@ -272,6 +295,7 @@ if((args.Length==1 || args.Length==2) && args[0]=="base64t") {
 	Console.Error.WriteLine("Various encoding utilities.");
 	Console.Error.WriteLine("enc utf8 U+XXXXXX*                     -- prints the UTF-8 bytes for the given code point");
 	Console.Error.WriteLine("enc hex filename?                      -- hex encoding");
+	Console.Error.WriteLine("enc cpp filename?                      -- hex as C integers encoding");
 	Console.Error.WriteLine("enc un-hex filename?                   -- reverses hex encoding");
 	Console.Error.WriteLine("enc base64 filename?                   -- base64 encoding");
 	Console.Error.WriteLine("enc base64t filename?                  -- base64 encoding after utf8 encoding");
